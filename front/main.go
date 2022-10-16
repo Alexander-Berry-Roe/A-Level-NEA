@@ -74,12 +74,13 @@ func test(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := http.Get("http://localhost:8081/" + r.URL.Path)
 	if err != nil {
-		print(err)
+		log.Println("Falied to connect to backend")
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		print(err)
+		fmt.Fprintf(w, "Error")
+		return
 	}
 	resp.Body.Close()
 	w.Write(body)

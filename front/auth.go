@@ -97,6 +97,7 @@ func checkUser(w http.ResponseWriter, r *http.Request) {
 
 }
 
+//Calculate a new hash for a new password
 func hashPassword(password string) (string, error) {
 	var passwordBytes = []byte(password)
 
@@ -106,6 +107,7 @@ func hashPassword(password string) (string, error) {
 	return string(hashedPasswordBytes), err
 }
 
+//check if the hash of the entered password matches the hash in the database
 func doPasswordsMatch(hashedPassword, currPassword string) bool {
 	err := bcrypt.CompareHashAndPassword(
 		[]byte(hashedPassword), []byte(currPassword))

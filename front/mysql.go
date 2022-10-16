@@ -40,16 +40,18 @@ type Mysql_db struct {
 	db *sql.DB
 }
 
+// Open databse connection, must be called before any other methods is called
 func (mysql_db *Mysql_db) open_db(username string, password string, address string, database string) {
 
 	db, err := sql.Open("mysql", username+":"+password+"@tcp("+address+")/"+database)
 	if err != nil {
 		panic(err)
 	}
-	// See "Important settings" section.
+
+	//Sets database up databse connection pool settings
 	db.SetConnMaxLifetime(time.Hour)
-	db.SetMaxOpenConns(10000)
-	db.SetMaxIdleConns(10000)
+	db.SetMaxOpenConns(100)
+	db.SetMaxIdleConns(100)
 
 	mysql_db.db = db
 
@@ -61,6 +63,7 @@ func ErrorCheck(err error) {
 	}
 }
 
+// Setup
 func (database *Mysql_db) db_load() {
 
 	create_user_table, err := database.db.Query("CREATE TABLE if not exists users (ID varchar(255) NOT NULL, pass_hash varchar(255), salt varchar(255) , PRIMARY KEY (ID));")
@@ -77,6 +80,7 @@ func (database *Mysql_db) db_load() {
 
 }
 
+// Add user to the user table
 func (database *Mysql_db) add_user(user string, pass string) bool {
 
 	var user_info = user_template{}
@@ -106,11 +110,13 @@ func (database *Mysql_db) add_user(user string, pass string) bool {
 	return true
 }
 
+// Check if a token is in the list of allowed tokens, return if true
 func (database *Mysql_db) check_token(token string) token_template {
 	var token_info = token_template{}
 
 	test_db := database.db
 
+	//Delete tokens expired tokens
 	res, err := test_db.Query("DELETE FROM tokens WHERE exp <= ? ;", time.Now().Unix())
 	if err != nil {
 		println(err)
@@ -118,6 +124,7 @@ func (database *Mysql_db) check_token(token string) token_template {
 
 	res.Close()
 
+	//Fetch the token if it exists
 	res, err = test_db.Query("SELECT * FROM tokens WHERE token = ?", token)
 	if err != nil {
 		println(err)
@@ -136,6 +143,7 @@ func (database *Mysql_db) check_token(token string) token_template {
 	return token_info
 }
 
+// Add token to the table of allowed tokens
 func (database *Mysql_db) allow_token(token string, userID string, exp int) {
 
 	res, err := database.db.Query("insert into tokens (token, user_ID, exp) VALUES (? , ?, ?);", token, userID, exp)
@@ -146,6 +154,7 @@ func (database *Mysql_db) allow_token(token string, userID string, exp int) {
 	//database.db.Close()
 }
 
+// Return the user record from the database
 func (database *Mysql_db) get_user(user_ID string) user_template {
 
 	var user user_template
@@ -161,10 +170,10 @@ func (database *Mysql_db) get_user(user_ID string) user_template {
 	}
 
 	res.Close()
-	//database.db.Close()
 	return user
 }
 
+// Add a record to the camera table
 func (database *Mysql_db) add_camera(name string, url int) {
 
 	res, err := database.db.Query("insert into cameras (ID, url) VALUES (UUID(), ?);", url)
@@ -173,7 +182,7 @@ func (database *Mysql_db) add_camera(name string, url int) {
 	}
 
 	res.Close()
-	//database.db.Close()
+
 }
 
 func (database *Mysql_db) get_camera(ID string) camera_template {
@@ -191,7 +200,6 @@ func (database *Mysql_db) get_camera(ID string) camera_template {
 	}
 
 	res.Close()
-	//database.db.Close()
 	return camera
 }
 
@@ -211,6 +219,6 @@ func (database *Mysql_db) getRecordings(CameraID string, Start int, End int) []r
 	}
 
 	res.Close()
-	return cameras
+	return recordings
 
 }
