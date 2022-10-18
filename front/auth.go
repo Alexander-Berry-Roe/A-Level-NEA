@@ -82,9 +82,11 @@ func checkUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := db.get_user(login.ID)
+	user := db.getUserByUsername(login.ID)
 
-	if user.ID != "" {
+	log.Println(user.username)
+
+	if user.username != "" {
 		if doPasswordsMatch(user.pass_hash, login.Pass) {
 			db.allow_token(token.Value, user.ID, int(time.Now().Unix()+3600))
 			fmt.Fprintf(w, "OK")
@@ -97,7 +99,7 @@ func checkUser(w http.ResponseWriter, r *http.Request) {
 
 }
 
-//Calculate a new hash for a new password
+// Calculate a new hash for a new password
 func hashPassword(password string) (string, error) {
 	var passwordBytes = []byte(password)
 
@@ -107,7 +109,7 @@ func hashPassword(password string) (string, error) {
 	return string(hashedPasswordBytes), err
 }
 
-//check if the hash of the entered password matches the hash in the database
+// check if the hash of the entered password matches the hash in the database
 func doPasswordsMatch(hashedPassword, currPassword string) bool {
 	err := bcrypt.CompareHashAndPassword(
 		[]byte(hashedPassword), []byte(currPassword))
@@ -117,4 +119,14 @@ func doPasswordsMatch(hashedPassword, currPassword string) bool {
 	} else {
 		return false
 	}
+}
+
+func checkPermissions(r *http.Request, permissionName string) bool {
+	token, err := r.Cookie("session_token")
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+
+	return db.checkUserPermission(db.getUserByToken(token.Value).ID, permissionName)
 }

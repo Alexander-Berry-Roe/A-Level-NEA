@@ -25,8 +25,6 @@ func main() {
 
 	db.open_db(config.Mysql_username, config.Mysql_password, config.Mysql_address, config.Mysql_database)
 
-	//db.get_user("91ae8aae-398f-11ed-b9eb-8a280ec120f6")
-
 	r.Use(authMiddleware)
 
 	srv := &http.Server{
@@ -37,7 +35,7 @@ func main() {
 		ReadTimeout:  15 * time.Second,
 	}
 
-	r.HandleFunc("/api/users/newuser", api_add_user).Methods("POST")
+	r.HandleFunc("/api/manageUsers/newuser", api_add_user).Methods("POST")
 
 	r.HandleFunc("/recording/{id:[a-zA-Z0-9].+}/{id:[a-zA-Z0-9].+}", getRecording)
 	r.HandleFunc("/stream/{id:[a-zA-Z0-9].+}", test)
@@ -49,8 +47,12 @@ func main() {
 }
 
 func api_add_user(w http.ResponseWriter, r *http.Request) {
-
 	var new_user user_info
+
+	if !checkPermissions(r, "manageUsers") {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
 
 	if err := json.NewDecoder(r.Body).Decode(&new_user); err != nil {
 		log.Println(err)

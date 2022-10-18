@@ -9,7 +9,7 @@ import (
 )
 
 type user_template struct {
-	ID        string
+	ID        int
 	pass_hash string
 	username  string
 }
@@ -45,7 +45,7 @@ func (mysql_db *Mysql_db) open_db(username string, password string, address stri
 
 	db, err := sql.Open("mysql", username+":"+password+"@tcp("+address+")/"+database)
 	if err != nil {
-		panic(err)
+		log.Println(err)
 	}
 
 	//Sets database up databse connection pool settings
@@ -83,26 +83,22 @@ func (database *Mysql_db) db_load() {
 // Add user to the user table
 func (database *Mysql_db) add_user(user string, pass string) bool {
 
-	var user_info = user_template{}
-
 	pass_hash, err := hashPassword(pass)
 
 	if err != nil {
 		log.Println(err)
 	}
 
-	if database.get_user(user).username != "" {
-		return false
-	}
+	//if database.get_user(user).username != "" {
+	//	return false
+	//}
 
-	res, err := database.db.Query("INSERT INTO users (ID, username , pass_hash) VALUES (UUID(),?, ?)", user, pass_hash)
+	res, err := database.db.Query("INSERT INTO users (userName, passHash) VALUES (?, ?)", user, pass_hash)
 	if err != nil {
+		println(err.Error)
 		log.Println(err)
-	}
-
-	for res.Next() {
-		err = res.Scan(&user_info.ID)
-		ErrorCheck(err)
+		res.Close()
+		return false
 	}
 
 	res.Close()
@@ -144,22 +140,22 @@ func (database *Mysql_db) check_token(token string) token_template {
 }
 
 // Add token to the table of allowed tokens
-func (database *Mysql_db) allow_token(token string, userID string, exp int) {
+func (database *Mysql_db) allow_token(token string, userID int, exp int) {
 
-	res, err := database.db.Query("insert into tokens (token, user_ID, exp) VALUES (? , ?, ?);", token, userID, exp)
+	res, err := database.db.Query("insert into tokens (token, UserID, exp) VALUES (? , ?, ?);", token, userID, exp)
 	if err != nil {
 		log.Println(err)
 	}
 	res.Close()
-	//database.db.Close()
+
 }
 
 // Return the user record from the database
-func (database *Mysql_db) get_user(user_ID string) user_template {
+func (database *Mysql_db) get_user(user_ID int) user_template {
 
 	var user user_template
 
-	res, err := database.db.Query("SELECT ID, pass_hash, username FROM users WHERE username = ?", user_ID)
+	res, err := database.db.Query("SELECT UserID, passHash, userName FROM users WHERE username = ?", user_ID)
 	if err != nil {
 		println(err)
 	}
@@ -221,4 +217,77 @@ func (database *Mysql_db) getRecordings(CameraID string, Start int, End int) []r
 	res.Close()
 	return recordings
 
+}
+
+func (db *Mysql_db) getUserByUsername(username string) user_template {
+	var user user_template
+
+	res, err := db.db.Query("SELECT UserID, userName, passHash from users where userName = ?", username)
+	if err != nil {
+		log.Println(err)
+	}
+
+	for res.Next() {
+		res.Scan(&user.ID, &user.username, &user.pass_hash)
+	}
+
+	return user
+}
+
+func (db *Mysql_db) getUserByToken(token string) user_template {
+	var user user_template
+
+	res, err := db.db.Query("SELECT users.userID, users.userName, users.passHash FROM users, tokens WHERE users.userID = tokens.userID AND tokens.token = ?;", token)
+	if err != nil {
+		log.Println(err)
+	}
+
+	for res.Next() {
+		res.Scan(&user.ID, &user.username, &user.pass_hash)
+	}
+
+	return user
+
+}
+
+func (db *Mysql_db) getPermissionID(permissionName string) int {
+	res, err := db.db.Query("SELECT permissionID FROM permissions WHERE permissionName == ?", permissionName)
+	if err != nil {
+		log.Println(err)
+		res.Close()
+		return -1
+	}
+
+	var id int
+	for res.Next() {
+		res.Scan(&id)
+	}
+	return id
+}
+
+func (db *Mysql_db) giveUserPermission(userID int, permissionID int) bool {
+	_, err := db.db.Query("INSERT INTO permissionLink (permissionID, userID) values(?, ?);", userID, permissionID)
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+	return true
+}
+
+func (db *Mysql_db) checkUserPermission(userID int, permissionName string) bool {
+	res, err := db.db.Query("SELECT users.userID FROM users, permissionLink, permissions WHERE users.userID = permissionLink.userID AND permissionLink.permissionID = permissions.permissionID AND permissions.permissionName = ? AND users.userID = ?;", permissionName, userID)
+	if err != nil {
+		log.Println(err)
+		res.Close()
+		return false
+	}
+	var id int
+	for res.Next() {
+		res.Scan(&id)
+	}
+	res.Close()
+	if id == userID {
+		return true
+	}
+	return false
 }
