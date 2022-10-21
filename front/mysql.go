@@ -64,7 +64,7 @@ func ErrorCheck(err error) {
 }
 
 // Setup
-func (database *Mysql_db) db_load() {
+func (database *Mysql_db) dbLoad() {
 
 	create_user_table, err := database.db.Query("CREATE TABLE if not exists users (ID varchar(255) NOT NULL, pass_hash varchar(255), salt varchar(255) , PRIMARY KEY (ID));")
 	if err != nil {
@@ -81,7 +81,7 @@ func (database *Mysql_db) db_load() {
 }
 
 // Add user to the user table
-func (database *Mysql_db) add_user(user string, pass string) bool {
+func (database *Mysql_db) addUser(user string, pass string) bool {
 
 	pass_hash, err := hashPassword(pass)
 
@@ -89,9 +89,9 @@ func (database *Mysql_db) add_user(user string, pass string) bool {
 		log.Println(err)
 	}
 
-	//if database.get_user(user).username != "" {
-	//	return false
-	//}
+	if database.getUserByUsername(user).username != "" {
+		return false
+	}
 
 	res, err := database.db.Query("INSERT INTO users (userName, passHash) VALUES (?, ?)", user, pass_hash)
 	if err != nil {
@@ -107,7 +107,7 @@ func (database *Mysql_db) add_user(user string, pass string) bool {
 }
 
 // Check if a token is in the list of allowed tokens, return if true
-func (database *Mysql_db) check_token(token string) token_template {
+func (database *Mysql_db) checkToken(token string) token_template {
 	var token_info = token_template{}
 
 	test_db := database.db
@@ -140,7 +140,7 @@ func (database *Mysql_db) check_token(token string) token_template {
 }
 
 // Add token to the table of allowed tokens
-func (database *Mysql_db) allow_token(token string, userID int, exp int) {
+func (database *Mysql_db) allowToken(token string, userID int, exp int) {
 
 	res, err := database.db.Query("insert into tokens (token, UserID, exp) VALUES (? , ?, ?);", token, userID, exp)
 	if err != nil {
@@ -151,7 +151,7 @@ func (database *Mysql_db) allow_token(token string, userID int, exp int) {
 }
 
 // Return the user record from the database
-func (database *Mysql_db) get_user(user_ID int) user_template {
+func (database *Mysql_db) getUser(user_ID int) user_template {
 
 	var user user_template
 
@@ -170,7 +170,7 @@ func (database *Mysql_db) get_user(user_ID int) user_template {
 }
 
 // Add a record to the camera table
-func (database *Mysql_db) add_camera(name string, url int) {
+func (database *Mysql_db) addCamera(name string, url int) {
 
 	res, err := database.db.Query("insert into cameras (ID, url) VALUES (UUID(), ?);", url)
 	if err != nil {
@@ -181,7 +181,7 @@ func (database *Mysql_db) add_camera(name string, url int) {
 
 }
 
-func (database *Mysql_db) get_camera(ID string) camera_template {
+func (database *Mysql_db) getCamera(ID string) camera_template {
 
 	var camera camera_template
 
@@ -251,7 +251,7 @@ func (db *Mysql_db) getUserByToken(token string) user_template {
 }
 
 func (db *Mysql_db) getPermissionID(permissionName string) int {
-	res, err := db.db.Query("SELECT permissionID FROM permissions WHERE permissionName == ?", permissionName)
+	res, err := db.db.Query("SELECT permissionID FROM permissions WHERE permissionName = ?;", permissionName)
 	if err != nil {
 		log.Println(err)
 		res.Close()
@@ -266,7 +266,7 @@ func (db *Mysql_db) getPermissionID(permissionName string) int {
 }
 
 func (db *Mysql_db) giveUserPermission(userID int, permissionID int) bool {
-	_, err := db.db.Query("INSERT INTO permissionLink (permissionID, userID) values(?, ?);", userID, permissionID)
+	_, err := db.db.Query("INSERT INTO permissionLink (permissionID, userID) values(?, ?);", permissionID, userID)
 	if err != nil {
 		log.Println(err)
 		return false
@@ -290,4 +290,31 @@ func (db *Mysql_db) checkUserPermission(userID int, permissionName string) bool 
 		return true
 	}
 	return false
+}
+
+func (db *Mysql_db) removeUserbyID(userID int) bool {
+	if db.getUser(userID).username == "" {
+		return false
+	}
+
+	_, err := db.db.Query("DELETE FROM users WHERE userID = ? ", userID)
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+	return true
+}
+
+func (db *Mysql_db) removeUserbyName(username string) bool {
+	if db.getUserByUsername(username).username == "" {
+		return false
+	}
+
+	_, err := db.db.Query("DELETE FROM users WHERE userName = ? ", username)
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+	return true
+
 }

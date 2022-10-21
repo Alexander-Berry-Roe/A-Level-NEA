@@ -16,6 +16,10 @@ type user_info struct {
 	Pass string `json:"pass"`
 }
 
+type user_info_name struct {
+	ID string `json:"id"`
+}
+
 func authMiddleware(next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -41,7 +45,7 @@ func authMiddleware(next http.Handler) http.Handler {
 				return
 			}
 		}
-		user_id = db.check_token(token.Value)
+		user_id = db.checkToken(token.Value)
 
 		if len(r.URL.Path) > 6 {
 			if r.URL.Path[0:6] == "/login" {
@@ -88,7 +92,7 @@ func checkUser(w http.ResponseWriter, r *http.Request) {
 
 	if user.username != "" {
 		if doPasswordsMatch(user.pass_hash, login.Pass) {
-			db.allow_token(token.Value, user.ID, int(time.Now().Unix()+3600))
+			db.allowToken(token.Value, user.ID, int(time.Now().Unix()+3600))
 			fmt.Fprintf(w, "OK")
 			return
 		}
