@@ -18,18 +18,19 @@ var db Mysql_db
 func main() {
 
 	r := mux.NewRouter()
-
+	//
 	db = Mysql_db{}
 
+	//Load the configuration file into memory
 	config := loadConfig("config.yaml")
 
+	//Open conneciton with database
 	db.open_db(config.Mysql_username, config.Mysql_password, config.Mysql_address, config.Mysql_database)
 
-	db.addUser("alex", "test")
-	db.giveUserPermission(db.getUserByUsername("alex").ID, db.getPermissionID("manageUsers"))
-
+	//Set all requests to use authentication middleware
 	r.Use(authMiddleware)
-
+	
+	//Sets web server configuation options
 	srv := &http.Server{
 		Handler: r,
 		Addr:    config.Address,
@@ -37,7 +38,7 @@ func main() {
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
-
+	//Sets up routing for POST requests.
 	r.HandleFunc("/api/manageUsers/newuser", apiAddUser).Methods("POST")
 	r.HandleFunc("/api/manageUsers/removeuser", apiRemoveUser).Methods("POST")
 
@@ -45,17 +46,18 @@ func main() {
 	r.HandleFunc("/stream/{id:[a-zA-Z0-9].+}", test)
 	r.HandleFunc("/login/auth", checkUser).Methods("POST")
 	r.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("static"))))
-
+	//Starts the webserver
 	log.Println("Server listening on " + srv.Addr)
 	log.Fatal(srv.ListenAndServe())
 }
 
 func getRecording(w http.ResponseWriter, r *http.Request) {
+	//This is just for testing
 	fmt.Fprintf(w, "OK")
 }
 
 func test(w http.ResponseWriter, r *http.Request) {
-
+	//This is still a very early prototype
 	resp, err := http.Get("http://localhost:8081/" + r.URL.Path)
 	if err != nil {
 		log.Println("Falied to connect to backend")
