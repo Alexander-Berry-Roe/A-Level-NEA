@@ -69,6 +69,7 @@ func authMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+//Checks if passowrd entered is correct and registers token to user.
 func checkUser(w http.ResponseWriter, r *http.Request) {
 
 	token, err := r.Cookie("session_token")
@@ -87,8 +88,6 @@ func checkUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := db.getUserByUsername(login.ID)
-
-	log.Println(user.username)
 
 	if user.username != "" {
 		if doPasswordsMatch(user.pass_hash, login.Pass) {
@@ -125,6 +124,7 @@ func doPasswordsMatch(hashedPassword, currPassword string) bool {
 	}
 }
 
+//Function used to check if user has a particular permission. 
 func checkPermissions(r *http.Request, permissionName string) bool {
 	token, err := r.Cookie("session_token")
 	if err != nil {
