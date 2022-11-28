@@ -5,18 +5,20 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/bitly/go-simplejson"
 )
 
-//REST API add user funciton
+// REST API add user funciton
 func apiAddUser(w http.ResponseWriter, r *http.Request) {
 	var new_user user_info
-	
+
 	//Checks if user has permission to manage users.
 	if !checkPermissions(r, "manageUsers") {
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
-	
+
 	//Decode json sent by post request.
 	if err := json.NewDecoder(r.Body).Decode(&new_user); err != nil {
 		log.Println(err)
@@ -32,7 +34,7 @@ func apiAddUser(w http.ResponseWriter, r *http.Request) {
 
 }
 
-//REST API fucntion to remove user
+// REST API fucntion to remove user
 func apiRemoveUser(w http.ResponseWriter, r *http.Request) {
 	//Check if user has mangeUser permissions
 	if !checkPermissions(r, "manageUsers") {
@@ -53,4 +55,47 @@ func apiRemoveUser(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "User does not exist")
 	}
 
+}
+
+func apiGetOwnUserInfo(w http.ResponseWriter, r *http.Request) {
+	resp := simplejson.New()
+	token, err := r.Cookie("session_token")
+	if err != nil {
+		log.Println(err)
+	}
+
+	user := db.getUserByToken(token.Value)
+
+	resp.Set(
+		"id", user.username,
+	)
+	payload, err := resp.MarshalJSON()
+	if err != nil {
+		log.Println(err)
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.Write(payload)
+
+}
+
+func apiLogout(w http.ResponseWriter, r *http.Request) {
+	resp := simplejson.New()
+	token, err := r.Cookie("session_token")
+	if err != nil {
+		log.Println(err)
+	}
+
+	if db.removeToken(token.Value) {
+		resp.Set("success", true)
+	} else {
+		resp.Set("success", false)
+	}
+
+	payload, err := resp.MarshalJSON()
+	if err != nil {
+		log.Panicln(err)
+	}
+	w.Header().Add("Content-Type", "application/json")
+	w.Write(payload)
 }

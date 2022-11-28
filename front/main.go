@@ -29,7 +29,7 @@ func main() {
 
 	//Set all requests to use authentication middleware
 	r.Use(authMiddleware)
-	
+
 	//Sets web server configuation options
 	srv := &http.Server{
 		Handler: r,
@@ -44,9 +44,14 @@ func main() {
 
 	r.HandleFunc("/recording/{id:[a-zA-Z0-9].+}/{id:[a-zA-Z0-9].+}", getRecording)
 	r.HandleFunc("/stream/{id:[a-zA-Z0-9].+}", test)
-	r.HandleFunc("/login/auth", checkUser).Methods("POST")
+	r.HandleFunc("/api/login/auth", checkUser).Methods("POST")
+	r.HandleFunc("/api/login/status", isLoggedIn).Methods("GET")
+	r.HandleFunc("/api/getSelfUser", apiGetOwnUserInfo).Methods("GET")
+	r.HandleFunc("/api/logout", apiLogout).Methods("GET")
 	r.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("static"))))
+
 	//Starts the webserver
+
 	log.Println("Server listening on " + srv.Addr)
 	log.Fatal(srv.ListenAndServe())
 }

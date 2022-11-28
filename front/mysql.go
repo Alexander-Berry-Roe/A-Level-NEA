@@ -318,3 +318,12 @@ func (db *Mysql_db) removeUserbyName(username string) bool {
 	return true
 
 }
+
+func (db *Mysql_db) removeToken(tokenValue string) bool {
+	_, err := db.db.Query("DELETE FROM tokens WHERE token = ?", tokenValue)
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+	return true
+}

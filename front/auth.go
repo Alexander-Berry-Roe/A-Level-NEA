@@ -2,18 +2,18 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"time"
 
+	"github.com/bitly/go-simplejson"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type user_info struct {
 	ID   string `json:"id"`
-	Pass string `json:"pass"`
+	Pass string `json:"passwd"`
 }
 
 type user_info_name struct {
@@ -23,7 +23,6 @@ type user_info_name struct {
 func authMiddleware(next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
 		token, err := r.Cookie("session_token")
 		var newToken string
 		var user_id token_template
@@ -37,7 +36,16 @@ func authMiddleware(next http.Handler) http.Handler {
 					Expires: expires,
 					Path:    "/",
 				})
-				http.Redirect(w, r, "/login/login.html", http.StatusFound)
+				resp := simplejson.New()
+				resp.Set("auth", false)
+				payload, err := resp.MarshalJSON()
+				if err != nil {
+					log.Println(err)
+				}
+
+				w.Header().Add("Content-Type", "application/json")
+				w.Write(payload)
+
 				return
 
 			} else {
@@ -46,16 +54,11 @@ func authMiddleware(next http.Handler) http.Handler {
 			}
 		}
 		user_id = db.checkToken(token.Value)
+		if len(r.URL.Path) > 10 {
+			if r.URL.Path[0:10] == "/api/login" {
+				next.ServeHTTP(w, r)
+				return
 
-		if len(r.URL.Path) > 6 {
-			if r.URL.Path[0:6] == "/login" {
-				if user_id.token == "" {
-					next.ServeHTTP(w, r)
-					return
-				} else {
-					http.Redirect(w, r, "/", http.StatusFound)
-					return
-				}
 			}
 		}
 
@@ -63,15 +66,14 @@ func authMiddleware(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		} else {
-			http.Redirect(w, r, "/login/login.html", http.StatusFound)
-			return
+			w.WriteHeader(http.StatusForbidden)
 		}
 	})
 }
 
-//Checks if passowrd entered is correct and registers token to user.
+// Checks if passowrd entered is correct and registers token to user.
 func checkUser(w http.ResponseWriter, r *http.Request) {
-
+	resp := simplejson.New()
 	token, err := r.Cookie("session_token")
 
 	if err != nil {
@@ -92,13 +94,47 @@ func checkUser(w http.ResponseWriter, r *http.Request) {
 	if user.username != "" {
 		if doPasswordsMatch(user.pass_hash, login.Pass) {
 			db.allowToken(token.Value, user.ID, int(time.Now().Unix()+3600))
-			fmt.Fprintf(w, "OK")
-			return
+			resp.Set("auth", true)
+
 		}
 
+	} else {
+		resp.Set("auth", false)
+	}
+
+	payload, err := resp.MarshalJSON()
+	if err != nil {
+		log.Println(err)
 	}
 
 	w.Header().Add("Content-Type", "application/json")
+	w.Write(payload)
+
+}
+
+func isLoggedIn(w http.ResponseWriter, r *http.Request) {
+	resp := simplejson.New()
+	token, err := r.Cookie("session_token")
+	if err != nil {
+		println(err)
+	}
+
+	user := db.getUserByToken(token.Value)
+
+	if user.username != "" {
+		resp.Set("auth", true)
+
+	} else {
+		resp.Set("auth", false)
+	}
+
+	payload, err := resp.MarshalJSON()
+	if err != nil {
+		log.Println(err)
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.Write(payload)
 
 }
 
@@ -124,7 +160,7 @@ func doPasswordsMatch(hashedPassword, currPassword string) bool {
 	}
 }
 
-//Function used to check if user has a particular permission. 
+// Function used to check if user has a particular permission.
 func checkPermissions(r *http.Request, permissionName string) bool {
 	token, err := r.Cookie("session_token")
 	if err != nil {
