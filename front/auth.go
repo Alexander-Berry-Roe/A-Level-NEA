@@ -58,7 +58,9 @@ func authMiddleware(next http.Handler) http.Handler {
 				return
 			}
 		}
+		//Calls method to run a database querry to fetch the user data asociated with the users session cookie value (token)
 		user_id = db.checkToken(token.Value)
+		//Exemption, allows access the api functions required for login to unauthenticated clients
 		if len(r.URL.Path) > 10 {
 			if r.URL.Path[0:10] == "/api/login" {
 				next.ServeHTTP(w, r)
@@ -66,7 +68,7 @@ func authMiddleware(next http.Handler) http.Handler {
 
 			}
 		}
-
+		//Only serve response if client is logged in as a valid user. 
 		if user_id.user_ID != "" {
 			next.ServeHTTP(w, r)
 			return
