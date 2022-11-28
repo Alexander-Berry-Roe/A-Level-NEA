@@ -23,8 +23,10 @@ type user_info_name struct {
 func authMiddleware(next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		//Get cookie, sent with request.
 		token, err := r.Cookie("session_token")
 		var user_id token_template
+		//If no cookie sent with request
 		if err != nil {
 			if err == http.ErrNoCookie {
 				var newToken string
@@ -36,6 +38,7 @@ func authMiddleware(next http.Handler) http.Handler {
 					Expires: expires,
 					Path:    "/",
 				})
+				//return 
 				resp := simplejson.New()
 				resp.Set("auth", false)
 				payload, err := resp.MarshalJSON()
