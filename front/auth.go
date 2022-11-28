@@ -30,15 +30,17 @@ func authMiddleware(next http.Handler) http.Handler {
 		if err != nil {
 			if err == http.ErrNoCookie {
 				var newToken string
+				//Generate cookie value
 				newToken = uuid.NewString()
 				expires := time.Now().Add(120 * time.Minute)
+				//Issue cookie
 				http.SetCookie(w, &http.Cookie{
 					Name:    "session_token",
 					Value:   newToken,
 					Expires: expires,
 					Path:    "/",
 				})
-				//return 
+				//return unauthised response
 				resp := simplejson.New()
 				resp.Set("auth", false)
 				payload, err := resp.MarshalJSON()
