@@ -24,10 +24,10 @@ func authMiddleware(next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token, err := r.Cookie("session_token")
-		var newToken string
 		var user_id token_template
 		if err != nil {
 			if err == http.ErrNoCookie {
+				var newToken string
 				newToken = uuid.NewString()
 				expires := time.Now().Add(120 * time.Minute)
 				http.SetCookie(w, &http.Cookie{
