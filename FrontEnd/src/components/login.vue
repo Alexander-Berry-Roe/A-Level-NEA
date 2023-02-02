@@ -72,6 +72,7 @@ export default {
                  } else {
                     this.error = true
                     this.loading = false
+                    this.password = "";
                 }
              
 	        })

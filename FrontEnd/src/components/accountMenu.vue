@@ -1,5 +1,5 @@
 <template>
-    <div class="account-menu">
+    <div class="account-menu" @mouseleave="close()">
         <div class="account-text" v-for="option in options" :key="option.title">
             <button class="account-button" @click="buttonClick(option)">
                 <h1 class="account-text">{{option.title}}</h1>  
@@ -64,24 +64,39 @@
 </style>
 <script>
 import { ref } from 'vue';
+import axios from 'axios';
+
+
 export default {
     data() {
         return {
-            options: [{title: 'Settings', hover: false}, {title: 'Logout', hover: false}]
+            options: []
         }
     },
     methods: {
         buttonClick(option) {
             if (option.title == "Logout") {
-                setTimeout(() => this.$emit("logoutOpen"), 200);
+                setTimeout(() => this.$emit("logoutOpen"), 250);
+            } else if (option.title == "Account settings") {
+                setTimeout(() => this.emitter.emit("openAccountMenu"), 250);
+                
             } else {
                 console.log("Unkown option")
             }
         },
-        logOut() {
-
+        loadMenu() {
+            axios
+                .get("/api/getAccountMenu")
+                .then(response => {
+                    this.options = response.data
+             })
+        },
+        close() {
+            this.$emit("close")
         }
+    },
+    mounted() {
+        this.emitter.on('loggedIn', this.loadMenu);
     }
-    
 }
 </script>

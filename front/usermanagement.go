@@ -9,6 +9,18 @@ import (
 	"github.com/bitly/go-simplejson"
 )
 
+type options struct {
+	accountMenuOptions []AccountMenuOption `json:"accountMenuOptions"`
+}
+
+type AccountMenuOption struct {
+	Title string `json:"title"`
+}
+
+type NewUserName struct {
+	Username string `json:"username"`
+}
+
 // REST API add user funciton
 func apiAddUser(w http.ResponseWriter, r *http.Request) {
 	var new_user user_info
@@ -96,6 +108,66 @@ func apiLogout(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Panicln(err)
 	}
+	w.Header().Add("Content-Type", "application/json")
+	w.Write(payload)
+}
+
+func getAccountMenuOptions(w http.ResponseWriter, r *http.Request) {
+	var response []AccountMenuOption
+	_, err := r.Cookie("session_token")
+	if err != nil {
+		log.Println(err)
+	}
+
+	var option AccountMenuOption
+	if true {
+		option.Title = "Account settings"
+		response = append(response, option)
+
+	}
+	option.Title = "Logout"
+	response = append(response, option)
+
+	payload, err := json.Marshal(response)
+	if err != nil {
+		log.Print(err)
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.Write(payload)
+
+}
+
+func changeOwnUsername(w http.ResponseWriter, r *http.Request) {
+	resp := simplejson.New()
+	token, err := r.Cookie("session_token")
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	var user NewUserName
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		log.Println(err)
+		http.Error(w, "Error decoidng response object", http.StatusBadRequest)
+		return
+	}
+
+	existingUser := db.getUserByUsername(user.Username)
+
+	if existingUser.username != "" {
+		resp.Set("success", false)
+	} else if db.changeUsernameByToken(token.Value, user.Username) {
+		resp.Set("success", true)
+	} else {
+		resp.Set("success", false)
+	}
+
+	payload, err := resp.MarshalJSON()
+	if err != nil {
+		log.Panicln(err)
+	}
+
 	w.Header().Add("Content-Type", "application/json")
 	w.Write(payload)
 }

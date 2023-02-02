@@ -1,7 +1,7 @@
 <template>
     <div> 
         <transition name="slide-fade">
-            <account-menu class="account-menu" v-show="accountMenuOpen" @logoutOpen="openLogout()"/>
+            <account-menu class="account-menu" v-show="accountMenuOpen" @logoutOpen="openLogout()" @close="accountMenuOpen=false"/>
         </transition> 
         <div class="navbar">
             <div class="navbar-account">

@@ -54,6 +54,9 @@ export default {
     border: none;
     cursor: pointer;
 }
+.button-yes:hover {
+    background: rgb(225, 0, 0);
+}
 .button-no {
     font-family: 'Courier New', Courier, monospace;
     color: white;
@@ -66,5 +69,8 @@ export default {
     border-radius: 5px;
     border: none;
     cursor: pointer;
+}
+.button-no:hover{
+    background: rgb(0, 92, 225);
 }
 </style>

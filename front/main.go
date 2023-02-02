@@ -28,7 +28,7 @@ func main() {
 	db.open_db(config.Mysql_username, config.Mysql_password, config.Mysql_address, config.Mysql_database)
 
 	//Set all requests to use authentication middleware
-	r.Use(authMiddleware)
+	//r.Use(authMiddleware)
 
 	//Sets web server configuation options
 	srv := &http.Server{
@@ -43,11 +43,14 @@ func main() {
 	r.HandleFunc("/api/manageUsers/removeuser", apiRemoveUser).Methods("POST")
 
 	r.HandleFunc("/recording/{id:[a-zA-Z0-9].+}/{id:[a-zA-Z0-9].+}", getRecording)
-	r.HandleFunc("/stream/{id:[a-zA-Z0-9].+}", test)
+	r.HandleFunc("/stream/{id:[a-zA-Z0-9].+}", getVideoFile)
 	r.HandleFunc("/api/login/auth", checkUser).Methods("POST")
 	r.HandleFunc("/api/login/status", isLoggedIn).Methods("GET")
 	r.HandleFunc("/api/getSelfUser", apiGetOwnUserInfo).Methods("GET")
 	r.HandleFunc("/api/logout", apiLogout).Methods("GET")
+	r.HandleFunc("/api/getAccountMenu", getAccountMenuOptions).Methods("GET")
+	r.HandleFunc("/api/setOwnUsername", changeOwnUsername).Methods("POST")
+	r.HandleFunc("/api/getAllStreams", apiGetStreamUrls).Methods("GET")
 	r.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("static"))))
 
 	//Starts the webserver
@@ -61,7 +64,7 @@ func getRecording(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "OK")
 }
 
-func test(w http.ResponseWriter, r *http.Request) {
+func getVideoFile(w http.ResponseWriter, r *http.Request) {
 	//This is still a very early prototype
 	resp, err := http.Get("http://localhost:8081/" + r.URL.Path)
 	if err != nil {

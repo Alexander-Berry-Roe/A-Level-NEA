@@ -21,9 +21,10 @@ type token_template struct {
 }
 
 type camera_template struct {
-	id   string
-	url  string
-	name string
+	id        string
+	url       string
+	name      string
+	streamurl string
 }
 
 type recording struct {
@@ -191,12 +192,30 @@ func (database *Mysql_db) getCamera(ID string) camera_template {
 	}
 
 	for res.Next() {
-		err = res.Scan(&camera.id, &camera.url, &camera.name)
+		err = res.Scan(&camera.id, &camera.url, &camera.name, &camera.streamurl)
 		ErrorCheck(err)
 	}
 
 	res.Close()
 	return camera
+}
+
+func (database *Mysql_db) getAllCameras() []camera_template {
+	var cameras []camera_template
+
+	res, err := database.db.Query("SELECT * FROM cameras;")
+	if err != nil {
+		println(err)
+	}
+
+	var tempcamera camera_template
+	for res.Next() {
+		res.Scan(&tempcamera.id, &tempcamera.url, &tempcamera.name, &tempcamera.streamurl)
+		cameras = append(cameras, tempcamera)
+	}
+
+	return cameras
+
 }
 
 func (database *Mysql_db) getRecordings(CameraID string, Start int, End int) []recording {
@@ -325,5 +344,17 @@ func (db *Mysql_db) removeToken(tokenValue string) bool {
 		log.Println(err)
 		return false
 	}
+	return true
+}
+
+func (db *Mysql_db) changeUsernameByToken(token string, newUsername string) bool {
+	user := db.getUserByToken(token)
+
+	_, err := db.db.Query("UPDATE users SET userName = ? where UserID = ?;", newUsername, user.ID)
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+
 	return true
 }
