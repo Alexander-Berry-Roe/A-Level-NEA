@@ -23,19 +23,24 @@ type user_info_name struct {
 func authMiddleware(next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		//Get cookie, sent with request.
 		token, err := r.Cookie("session_token")
-		var newToken string
 		var user_id token_template
+		//If no cookie sent with request
 		if err != nil {
 			if err == http.ErrNoCookie {
+				var newToken string
+				//Generate cookie value
 				newToken = uuid.NewString()
 				expires := time.Now().Add(120 * time.Minute)
+				//Issue cookie
 				http.SetCookie(w, &http.Cookie{
 					Name:    "session_token",
 					Value:   newToken,
 					Expires: expires,
 					Path:    "/",
 				})
+				//return unauthised response
 				resp := simplejson.New()
 				resp.Set("auth", false)
 				payload, err := resp.MarshalJSON()
@@ -53,7 +58,9 @@ func authMiddleware(next http.Handler) http.Handler {
 				return
 			}
 		}
+		//Calls method to run a database querry to fetch the user data asociated with the users session cookie value (token)
 		user_id = db.checkToken(token.Value)
+		//Exemption, allows access the api functions required for login to unauthenticated clients
 		if len(r.URL.Path) > 10 {
 			if r.URL.Path[0:10] == "/api/login" {
 				next.ServeHTTP(w, r)
@@ -61,7 +68,7 @@ func authMiddleware(next http.Handler) http.Handler {
 
 			}
 		}
-
+		//Only serve response if client is logged in as a valid user. 
 		if user_id.user_ID != "" {
 			next.ServeHTTP(w, r)
 			return
