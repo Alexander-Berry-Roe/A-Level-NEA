@@ -14,7 +14,7 @@ import (
 )
 
 type Monitors struct {
-	listofMonitors []Monitor
+	listofMonitors LinkedList
 }
 
 type Monitor struct {
@@ -50,9 +50,9 @@ func createDir(dir string) {
 }
 
 func (monitors *Monitors) getMonitorById(id int) *Monitor {
-	for i, e := range monitors.listofMonitors {
+	for i, e := range monitors.listofMonitors.toArray() {
 		if e.id == id {
-			return &monitors.listofMonitors[i]
+			return monitors.listofMonitors.get(i)
 		}
 	}
 	var empty Monitor
@@ -60,7 +60,7 @@ func (monitors *Monitors) getMonitorById(id int) *Monitor {
 }
 
 func (monitors *Monitors) getExists(id int) bool {
-	for _, e := range monitors.listofMonitors {
+	for _, e := range monitors.listofMonitors.toArray() {
 		if e.id == id {
 			return true
 		}
@@ -129,11 +129,10 @@ func (monitor *Monitor) captureCamera(dir string) {
 		"-rtsp_transport", "tcp", "-i", monitor.url, "-vsync", "0", "-copyts", "-vcodec",
 		"copy", "-movflags", "frag_keyframe+empty_moov", "-an", "-hls_flags", "delete_segments+append_list", "-f",
 		"segment", "-segment_list_flags", "live", "-segment_time", "4", "-segment_list_size", "1", "-segment_format", "mpegts",
-		"-segment_list", "pipe:1", "-segment_list_type", "m3u8", "stream/"+dir+"/%d.ts")
+		"-segment_list", "pipe:1", "-segment_list_type", "m3u8", "stream/"+dir+"/%d.ts", "-vf", "fps=1/8", "-update", "1", "stream/png/"+strconv.Itoa(monitor.id)+".png", "-y")
 
 	//Open the stdout pipe
 	stdout, _ := cmd.StdoutPipe()
-
 	//Start ffmpeg
 	cmd.Start()
 
@@ -179,8 +178,6 @@ func (monitor *Monitor) captureCamera(dir string) {
 					tempPlaylistStore += location + "\n"
 					db.createRecordingRecord(monitor.id, time.Now().Unix()-int64(duration), time.Now().Unix(), duration, location, false)
 					monitor.mediaTag += 1
-					log.Println(monitor.id)
-					log.Println(monitor.mediaTag)
 				} else {
 					tempPlaylistStore += m + "\n"
 				}
@@ -253,7 +250,7 @@ func (monitors *Monitors) addMonitor(id int, url string) {
 	newMonitor.id = id
 	newMonitor.url = url
 	newMonitor.control = make(chan int)
-	monitors.listofMonitors = append(monitors.listofMonitors, newMonitor)
+	monitors.listofMonitors.add(newMonitor)
 
 }
 

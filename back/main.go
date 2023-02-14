@@ -115,7 +115,7 @@ type StreamResponse struct {
 func getStreamUrls(w http.ResponseWriter, r *http.Request) {
 	var resp []StreamResponse
 
-	for _, e := range recordings.listofMonitors {
+	for _, e := range recordings.listofMonitors.toArray() {
 		if e.running {
 			var tmpResp StreamResponse
 			tmpResp.Id = e.id

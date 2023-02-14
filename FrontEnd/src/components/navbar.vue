@@ -3,12 +3,11 @@
         <transition name="slide-fade">
             <account-menu class="account-menu" v-show="accountMenuOpen" @logoutOpen="openLogout()" @close="accountMenuOpen=false"/>
         </transition> 
-        <transition>
-            <sideMenu/>
-        </transition>
+        <sideMenu v-show="sideMenuShown"/>
+
 
         <div class="navbar">
-                <button class="side-menu-button">
+                <button class="side-menu-button" @click="sideMenuShown = !sideMenuShown">
                     <div class="side-menu-button"></div>
                     <div class="side-menu-button"></div>
                     <div class="side-menu-button"></div>
@@ -43,7 +42,8 @@ export default {
     },
     data() {
         return {
-            accountMenuOpen: false   
+            accountMenuOpen: false,
+            sideMenuShown: false   
         }
     },
     methods: {
