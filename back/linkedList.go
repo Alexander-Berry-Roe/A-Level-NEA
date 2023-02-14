@@ -74,3 +74,28 @@ func (l *LinkedList) set(i int, data Monitor) {
 	}
 	node.data = data
 }
+
+func (l *LinkedList) remove(data Monitor) {
+	node := l.head
+	var prev *Node
+
+	// Traverse the list to find the node to remove
+	for node != nil {
+		if node.data == data {
+			// Found the node to remove
+
+			if prev == nil {
+				// Removing the head of the list
+				l.head = node.next
+			} else {
+				// Removing a node in the middle or end of the list
+				prev.next = node.next
+			}
+			return
+		}
+
+		// Keep track of the previous node
+		prev = node
+		node = node.next
+	}
+}
