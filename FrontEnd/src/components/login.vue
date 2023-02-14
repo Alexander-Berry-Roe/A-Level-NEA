@@ -20,10 +20,7 @@
                     <input type="password" id="password" class="login-input" placeholder="password" v-model="password"/>
                 </div>
                 
-                <button v-if="!loading" class="input-group-button" @click="login()">Log in</button>
-                <button v-if="loading" class="input-group-button">
-                    <img class="loading-icon" src="./icons/loading.svg">
-                </button>
+                <button class="input-group-button" @click="login()">Log in</button>
 
 
             </div>
@@ -36,7 +33,7 @@
  
 <script>
 import axios from "axios";
-import AppVue from '@/App.vue';
+import { ref } from 'vue';
 import modal from './modal.vue';
 export default {
   components: { modal },
@@ -46,7 +43,6 @@ export default {
         return {
             username: "",
             password: "",
-            loading: false,
             loggedin: false,
             error: false
         };

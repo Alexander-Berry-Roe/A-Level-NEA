@@ -21,10 +21,11 @@ type token_template struct {
 }
 
 type camera_template struct {
-	id        string
-	url       string
-	name      string
-	streamurl string
+	id     int
+	url    string
+	name   string
+	height int
+	width  int
 }
 
 type recording struct {
@@ -35,6 +36,14 @@ type recording struct {
 	endFile   int
 	exp       int
 	protected bool
+}
+
+type layout struct {
+	empty  bool
+	width  int
+	height int
+	posX   int
+	posY   int
 }
 
 type Mysql_db struct {
@@ -171,28 +180,18 @@ func (database *Mysql_db) getUser(user_ID int) user_template {
 }
 
 // Add a record to the camera table
-func (database *Mysql_db) addCamera(name string, url int) {
-
-	res, err := database.db.Query("insert into cameras (ID, url) VALUES (UUID(), ?);", url)
-	if err != nil {
-		log.Println(err)
-	}
-
-	res.Close()
-
-}
 
 func (database *Mysql_db) getCamera(ID string) camera_template {
 
 	var camera camera_template
 
-	res, err := database.db.Query("SELECT * FROM cameras WHERE ID = ?", ID)
+	res, err := database.db.Query("SELECT (CameraID, url, name) FROM cameras WHERE ID = ?", ID)
 	if err != nil {
 		println(err)
 	}
 
 	for res.Next() {
-		err = res.Scan(&camera.id, &camera.url, &camera.name, &camera.streamurl)
+		err = res.Scan(&camera.id, &camera.url, &camera.name)
 		ErrorCheck(err)
 	}
 
@@ -200,17 +199,17 @@ func (database *Mysql_db) getCamera(ID string) camera_template {
 	return camera
 }
 
-func (database *Mysql_db) getAllCameras() []camera_template {
+func (database *Mysql_db) getAllMointors() []camera_template {
 	var cameras []camera_template
 
-	res, err := database.db.Query("SELECT * FROM cameras;")
+	res, err := database.db.Query("SELECT CameraID, url, name, height, width FROM cameras;")
 	if err != nil {
 		println(err)
 	}
 
 	var tempcamera camera_template
 	for res.Next() {
-		res.Scan(&tempcamera.id, &tempcamera.url, &tempcamera.name, &tempcamera.streamurl)
+		res.Scan(&tempcamera.id, &tempcamera.url, &tempcamera.name, &tempcamera.height, &tempcamera.width)
 		cameras = append(cameras, tempcamera)
 	}
 
@@ -357,4 +356,40 @@ func (db *Mysql_db) changeUsernameByToken(token string, newUsername string) bool
 	}
 
 	return true
+}
+
+func (db *Mysql_db) addCamera(url string, name string) {
+	_, err := db.db.Query("INSERT INTO cameras (url, name) VALUES (?, ?)", url, name)
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+// Methods for handling live player layout for each user.
+func (db *Mysql_db) getCameraLayout(userID int, cameraID int) layout {
+	var response layout
+	response.empty = true
+	res, err := db.db.Query("SELECT width, height, posX, posY FROM livePlayers WHERE userID = ? AND cameraID = ? ", userID, cameraID)
+	if err != nil {
+		log.Println(err)
+	}
+	if res.Next() {
+		response.empty = false
+		res.Scan(&response.width, &response.height, &response.posX, &response.posY)
+	}
+	res.Close()
+	return response
+}
+
+// Unused TO BE DLETED LATTER AFTER DOCUMENTATION.
+func (db *Mysql_db) setCameraLayout(userID int, cameraID int, width int, height int, posx int, posy int) bool {
+
+	db.db.Query("DELETE FROM livePlayers WHERE cameraID = ?;", cameraID)
+	_, err := db.db.Query("INSERT INTO livePlayers (userID, cameraID, width, height, posX, posY) VALUES (?, ?, ?, ?, ?, ?);", userID, cameraID, width, height, posx, posy)
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+	return true
+
 }

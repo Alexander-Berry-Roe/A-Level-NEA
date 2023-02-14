@@ -120,11 +120,14 @@ func getAccountMenuOptions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var option AccountMenuOption
-	if true {
-		option.Title = "Account settings"
-		response = append(response, option)
+	option.Title = "Account settings"
+	response = append(response, option)
 
+	if checkPermissions(r, "manageCameras") {
+		option.Title = "Manage Cameras"
+		response = append(response, option)
 	}
+
 	option.Title = "Logout"
 	response = append(response, option)
 

@@ -3,8 +3,18 @@
         <transition name="slide-fade">
             <account-menu class="account-menu" v-show="accountMenuOpen" @logoutOpen="openLogout()" @close="accountMenuOpen=false"/>
         </transition> 
+        <transition>
+            <sideMenu/>
+        </transition>
+
         <div class="navbar">
+                <button class="side-menu-button">
+                    <div class="side-menu-button"></div>
+                    <div class="side-menu-button"></div>
+                    <div class="side-menu-button"></div>
+                </button>
             <div class="navbar-account">
+
                 <button class="navbar-account" @click="accountMenuOpen = !accountMenuOpen">
                      <h3>
                         {{username}}
@@ -20,15 +30,51 @@
 </template>
 
 
+
+<script>
+import { ref } from 'vue';
+import accountMenu from './accountMenu.vue'
+import sideMenu from './sidemenu.vue'
+export default {
+    props: ['username'],
+    components: {
+        accountMenu,
+        sideMenu
+    },
+    data() {
+        return {
+            accountMenuOpen: false   
+        }
+    },
+    methods: {
+        openLogout() {
+            this.$emit("logoutOpen")
+        }
+    }
+}
+
+</script>
+
 <style scoped>
 body{
     background-color: rgb(255, 255, 255);
 }
 
+.account-menu{
+    top: 3rem;
+    z-index: 10;
+}
 .navbar-account{
     display: flex;
     justify-content: right;
     align-items: center;  
+    
+}
+
+div.navbar-account{
+    position: fixed;
+    right: 0;
+    top: 0;
     
 }
 
@@ -58,28 +104,26 @@ button.navbar-account{
     width: 100%;
     top:0;
     left: 0;
+    z-index: 10;
+}
+button.side-menu-button {
+    position: fixed;
+    background: none;
+    height:3rem;
+    width: 2.5rem;
+    color: white;
+    border: none;
+    cursor: pointer;
+    
+    
+}
+
+div.side-menu-button {
+  height: 2px;
+  margin: 4px;
+  background-color: white;
+  margin: 6px 0;
+  
 }
 
 </style>
-
-<script>
-import { ref } from 'vue';
-import accountMenu from './accountMenu.vue'
-export default {
-    props: ['username'],
-    components: {
-        accountMenu
-    },
-    data() {
-        return {
-            accountMenuOpen: false   
-        }
-    },
-    methods: {
-        openLogout() {
-            this.$emit("logoutOpen")
-        }
-    }
-}
-
-</script>

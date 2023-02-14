@@ -13,10 +13,10 @@ type Mysql_db struct {
 }
 
 type camera struct {
-	id        int
-	url       string
-	name      string
-	streamURL string
+	id      int
+	url     string
+	name    string
+	enabled bool
 }
 
 type recordingSegment struct {
@@ -61,7 +61,7 @@ func (db *Mysql_db) getPermissionID(permissionName string) int {
 func (mysql_db *Mysql_db) get_camera_list() []camera {
 	var cameras []camera
 
-	res, err := mysql_db.db.Query("SELECT CameraID, url, name, streamURL from cameras;")
+	res, err := mysql_db.db.Query("SELECT CameraID, url, name, enabled from cameras;")
 
 	if err != nil {
 		log.Println(err)
@@ -71,7 +71,7 @@ func (mysql_db *Mysql_db) get_camera_list() []camera {
 
 	//Adds the list of cameras from the database to the array
 	for res.Next() {
-		res.Scan(&camera.id, &camera.url, &camera.name, &camera.streamURL)
+		res.Scan(&camera.id, &camera.url, &camera.name, &camera.enabled)
 		cameras = append(cameras, camera)
 	}
 
@@ -103,5 +103,44 @@ func (mysql_db *Mysql_db) getSegmentList(start int64, end int64, id int64) []rec
 	}
 	res.Close()
 	return recordList
+
+}
+
+func (mysql_db *Mysql_db) getLiveSegments(id int64) []recordingSegment {
+	var recordList []recordingSegment
+	res, err := mysql_db.db.Query("SELECT * FROM (SELECT start, end, duration, location FROM recordings WHERE CameraID = ? ORDER BY end DESC limit 3) AS `table`  ORDER BY end ASC;", id)
+	if err != nil {
+		log.Println(err)
+		return recordList
+	}
+
+	var tempRecord recordingSegment
+	for res.Next() {
+		res.Scan(&tempRecord.start, &tempRecord.end, &tempRecord.duration, &tempRecord.location)
+		recordList = append(recordList, tempRecord)
+	}
+	res.Close()
+	return recordList
+
+}
+
+//Set and get Resolution
+
+func (mysql_db *Mysql_db) setResolution(resoltion []int, cameraID int) {
+	_, err := mysql_db.db.Query("UPDATE cameras SET width = ? , height = ? WHERE CameraID = ?;", resoltion[0], resoltion[1], cameraID)
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+func (mysql_db *Mysql_db) getResolution(cameraID int) []int {
+	var resolution []int
+	res, err := mysql_db.db.Query("SELECT (width, height) FROM cmaeras WHERE CameraID = ?", cameraID)
+	if err != nil {
+		log.Println(err)
+	}
+	res.Scan(resolution[0], resolution[1])
+
+	return resolution
 
 }

@@ -1,3 +1,4 @@
+// Allow for reload camera data
 package main
 
 import (
@@ -16,7 +17,7 @@ type camera_proxy struct {
 
 var db Mysql_db
 
-var recordings monitors
+var recordings Monitors
 
 func main() {
 
@@ -24,8 +25,6 @@ func main() {
 
 	//
 	db = Mysql_db{}
-
-	//recordings.loadCameras()
 
 	//Load the configuration file into memory
 	config := loadConfig("config.yaml")
@@ -50,7 +49,8 @@ func main() {
 	//Sets up routing for POST requests.
 	r.HandleFunc("/api/startCapture", startCapture).Methods("POST")
 	r.HandleFunc("/api/stopCapture", stopCapture).Methods("POST")
-	r.HandleFunc("/api/getLivePlaylist", getLivePlaylits).Methods("GET")
+	r.HandleFunc("/stream/getLivePlaylist/{id:[0-9]+}.m3u8", getLivePlaylists).Methods("GET")
+	r.HandleFunc("/stream/getRunning", getStreamUrls)
 	r.PathPrefix("/stream/").Handler(http.StripPrefix("/stream/", http.FileServer(http.Dir("./stream/"))))
 	//Starts the webserver
 
@@ -87,9 +87,11 @@ func stopCapture(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func getLivePlaylits(w http.ResponseWriter, r *http.Request) {
+func getLivePlaylists(w http.ResponseWriter, r *http.Request) {
+	id, _ := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
+
 	w.Header().Set("Content-Type", "application/x-mpegURL")
-	fmt.Fprintf(w, recordings.listofMonitors[1].playlist)
+	fmt.Fprintf(w, recordings.getMonitorById(int(id)).generateLivePlaylist())
 
 }
 
@@ -103,4 +105,30 @@ func getRecordedPlaylist(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/x-mpegURL")
 	fmt.Fprint(w, playlist)
+}
+
+type StreamResponse struct {
+	Id  int    `json:"id"`
+	Url string `json:url`
+}
+
+func getStreamUrls(w http.ResponseWriter, r *http.Request) {
+	var resp []StreamResponse
+
+	for _, e := range recordings.listofMonitors {
+		if e.running {
+			var tmpResp StreamResponse
+			tmpResp.Id = e.id
+			tmpResp.Url = "/stream/getLivePlaylist/" + strconv.Itoa(e.id) + "/"
+			resp = append(resp, tmpResp)
+		}
+	}
+
+	payload, err := json.Marshal(resp)
+	if err != nil {
+		log.Print(err)
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.Write(payload)
 }

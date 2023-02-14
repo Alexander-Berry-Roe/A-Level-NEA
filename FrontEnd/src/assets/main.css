@@ -3,9 +3,7 @@ body{
   font-family: 'Courier New', Courier, monospace;
 }
 
-.{
-  font-family: 'Courier New', Courier, monospace;
-}
+
 
 .fade-enter-active, .fade-leave-active {
   transition: opacity .10s;

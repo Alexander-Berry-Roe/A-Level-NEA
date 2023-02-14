@@ -28,7 +28,7 @@ func main() {
 	db.open_db(config.Mysql_username, config.Mysql_password, config.Mysql_address, config.Mysql_database)
 
 	//Set all requests to use authentication middleware
-	//r.Use(authMiddleware)
+	r.Use(authMiddleware)
 
 	//Sets web server configuation options
 	srv := &http.Server{
@@ -51,6 +51,7 @@ func main() {
 	r.HandleFunc("/api/getAccountMenu", getAccountMenuOptions).Methods("GET")
 	r.HandleFunc("/api/setOwnUsername", changeOwnUsername).Methods("POST")
 	r.HandleFunc("/api/getAllStreams", apiGetStreamUrls).Methods("GET")
+	r.HandleFunc("/api/setStreamLocation", apiSetLocation).Methods("POST")
 	r.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("static"))))
 
 	//Starts the webserver

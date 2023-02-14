@@ -11,17 +11,16 @@
 
 <style>
 .account-menu{
-    margin-top: 3rem;
+    position: fixed;
+    right: 0.5rem;
     background-color: white;
-    border: 0rem;
-    margin-left: auto;
     width: 10rem;
     border: 0rem;
     border-bottom-left-radius: 0.2rem;
     border-bottom-right-radius: 0.2rem;
     overflow: hidden;
-
 }
+
 .account-text {
     margin: 0rem;
     text-align: left;
@@ -80,6 +79,8 @@ export default {
             } else if (option.title == "Account settings") {
                 setTimeout(() => this.emitter.emit("openAccountMenu"), 250);
                 
+            } else if (option.title == "Manage Cameras") {
+                setTimeout(() => this.emitter.emit("openCameraMenu"))
             } else {
                 console.log("Unkown option")
             }

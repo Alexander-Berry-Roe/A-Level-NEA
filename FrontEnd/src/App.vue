@@ -1,10 +1,13 @@
 <template>
+
+    
     <div id="app">
         <navbar :username="this.username" 
             @logoutOpen="logoutPrompt = true"
         >
         </navbar>
     </div>
+    
 
     <transition name="fade">
         <login v-show="!logged_in" @loggedIn="setLogin()"></login>
@@ -21,6 +24,15 @@
             </menuContainer>
         </popup>
     </transition>
+    <transition name="fade">
+       <popup v-show="cameraSettings">
+            <menuContainer @close="bigLivePlayer = cameraSettings = false">
+                <cameraMenu/>
+            </menuContainer>
+        </popup>
+    </transition>
+    <live-video/>
+
 </template>
 
 <style scoped>
@@ -33,9 +45,9 @@
 </style>
 
 <script>
+
 import navbar from './components/navbar.vue';
 import Login from './components/login.vue';
-import { ref } from 'vue';
 import axios from "axios";
 import popup from "./components/popup.vue";
 import logout from "./components/logout.vue";
@@ -43,7 +55,9 @@ import accountSettings from "./components/accountSettings.vue";
 import menuContainer from "./components/menuContainer.vue";
 import VModal from 'vue-js-modal';
 import Modal from './components/modal.vue';
-import draggable from 'vuedraggable';
+import { draggable } from 'vuedraggable';
+import liveVideo from './components/livePlayer.vue';
+import cameraMenu from './components/cameraMenu.vue';
 
 
 export default {
@@ -55,11 +69,11 @@ export default {
         accountSettings,
         menuContainer,
         VModal,
-        draggable
-    
-
-  ,
-        Modal  },
+        draggable,
+        Modal,
+        liveVideo, 
+        cameraMenu
+    },
     data() {
         return {
             logged_in: true,
@@ -67,7 +81,8 @@ export default {
             username: "",
             logoutPrompt: false,
             accountMenuList: [],
-            accountSettingsShow: false
+            accountSettingsShow: false,
+            cameraSettings: false
 
 
         }
@@ -93,6 +108,10 @@ export default {
 
         openAccountMenu() {
             this.accountSettingsShow = true
+        },
+
+        openCameraMenu() {
+            this.cameraSettings = true
         }
 
     },
@@ -113,6 +132,7 @@ export default {
     mounted() {
         this.emitter.on("openAccountMenu", this.openAccountMenu);
         this.emitter.on("reloadUserInfo", this.refreshUserInfo);
+        this.emitter.on("openCameraMenu", this.openCameraMenu)
     }
 
 }
