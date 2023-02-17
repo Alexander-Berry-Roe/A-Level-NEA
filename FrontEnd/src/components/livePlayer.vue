@@ -2,8 +2,8 @@
 
     <div class="video-box" :grid="grid" :widgets="streams" :resizable="true">
       <template v-for="stream in streams" :key="stream.id" > 
-        <div class="video-player" @mouseenter="stream.controls = true" @mouseleave="stream.controls = false">
-          <video class="video-player" :ref="`video-${stream.id}`" :style="{ width: stream.width + 'px' }">
+        <div v-show="players" class="video-player" @mouseenter="stream.controls = true" @mouseleave="stream.controls = false">
+          <video class="video-player" :ref="`video-${stream.id}`">
             <source :src="stream.url" :id="stream.id" type="application/x-mpegURL" />
           </video>
           <div v-show="stream.controls" class="camera-controls">
@@ -43,7 +43,8 @@ import popup from "./popup.vue";
         draggable: true,
         initWidth: 0,
         isResizing: false,
-        DraggableContainer 
+        DraggableContainer,
+        players: true
       }
       
     },
@@ -52,14 +53,28 @@ import popup from "./popup.vue";
         console.log(event)
       },
       playVideo(video) {
-        if (Hls.isSupported()) {
+        const videoElement = this.$refs[`video-${video.id}`][0]
+        //Checks if native or playback via HLS.js is available 
+        if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+          // Native playback is available
+          console.log("Native playback enabled")
+          videoElement.src = video.url
+          videoElement.addEventListener('loadedmetadata', () => {
+            videoElement.play()
+          })
+        } else if (Hls.isSupported()) {
+          // HLS is supported, use HLS.js
           const hlsInstance = new Hls()
           hlsInstance.loadSource(video.url)
-          hlsInstance.attachMedia(this.$refs[`video-${video.id}`][0])
+          hlsInstance.attachMedia(videoElement)
           hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
-            this.$refs[`video-${video.id}`][0].play()
+            videoElement.play()
           })
-        }
+        } else {
+          // Neither HLS nor native playback is available
+          console.error('HLS and native playback are not supported')
+      }
+
       },
       savePlayerLocation(stream) {
         axios({
@@ -97,7 +112,7 @@ import popup from "./popup.vue";
       axios
       .get("/api/getAllStreams").then((response) => {
         for (let i = 0; i < response.data.length; i++) {
-          this.streams.push({id: response.data[i].id, url: response.data[i].live, controls: false, cameraName: response.data[i].Name, cordx: response.data[i].PosX, cordy: response.data[i].PosY, height: response.data[i].Height, width: response.data[i].Width})
+          this.streams.push({id: response.data[i].id, url: response.data[i].live, controls: false, cameraName: response.data[i].Name})
         }
       })
       document.addEventListener('click', () => {
@@ -122,12 +137,16 @@ import popup from "./popup.vue";
     top: 3rem;
     position: relative;
     width: 100%;
+    z-index: -3;
     
   }
 
 .video-player{
   float: left;
   position: relative;
+  max-width:1200px;
+  width: 100%;
+  z-index: -3;
 }
 
 .camera-controls {
@@ -136,11 +155,13 @@ import popup from "./popup.vue";
   width: 100%;
   background-color: rgba(255, 255, 255, 0.5);
   margin: 0px;
+  z-index: -3;
 }
   .resize-button {
     position: absolute;
     right: 0;
     bottom: 0.1rem;
+    z-index: -3;
   }
 
   .video-box {
@@ -149,5 +170,6 @@ import popup from "./popup.vue";
     left: 0;
     width: 100%;
     margin: 0;
+      z-index: -3;
   }
 </style>

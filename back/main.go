@@ -33,7 +33,7 @@ func main() {
 	db.open_db(config.Mysql_username, config.Mysql_password, config.Mysql_address, config.Mysql_database)
 
 	recordings.loadCameras()
-
+	go recordings.automaticDelete()
 	//Set all requests to use authentication middleware
 
 	//Sets web server configuation options

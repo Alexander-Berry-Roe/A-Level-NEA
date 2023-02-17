@@ -62,7 +62,7 @@ body{
 
 .account-menu{
     top: 3rem;
-    z-index: 10;
+    z-index: -2;
 }
 .navbar-account{
     display: flex;
@@ -104,7 +104,7 @@ button.navbar-account{
     width: 100%;
     top:0;
     left: 0;
-    z-index: 10;
+    z-index: -1;
 }
 button.side-menu-button {
     position: fixed;

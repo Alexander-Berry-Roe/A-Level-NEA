@@ -21,11 +21,13 @@ type token_template struct {
 }
 
 type camera_template struct {
-	id     int
-	url    string
-	name   string
-	height int
-	width  int
+	id         int
+	url        string
+	name       string
+	height     int
+	width      int
+	enabled    bool
+	defaultExp int
 }
 
 type recording struct {
@@ -202,14 +204,14 @@ func (database *Mysql_db) getCamera(ID string) camera_template {
 func (database *Mysql_db) getAllMointors() []camera_template {
 	var cameras []camera_template
 
-	res, err := database.db.Query("SELECT CameraID, url, name, height, width FROM cameras;")
+	res, err := database.db.Query("SELECT CameraID, url, name, height, width, enabled, defaultExp FROM cameras;")
 	if err != nil {
 		println(err)
 	}
 
 	var tempcamera camera_template
 	for res.Next() {
-		res.Scan(&tempcamera.id, &tempcamera.url, &tempcamera.name, &tempcamera.height, &tempcamera.width)
+		res.Scan(&tempcamera.id, &tempcamera.url, &tempcamera.name, &tempcamera.height, &tempcamera.width, &tempcamera.enabled, &tempcamera.defaultExp)
 		cameras = append(cameras, tempcamera)
 	}
 
@@ -284,11 +286,12 @@ func (db *Mysql_db) getPermissionID(permissionName string) int {
 }
 
 func (db *Mysql_db) giveUserPermission(userID int, permissionID int) bool {
-	_, err := db.db.Query("INSERT INTO permissionLink (permissionID, userID) values(?, ?);", permissionID, userID)
+	res, err := db.db.Query("INSERT INTO permissionLink (permissionID, userID) values(?, ?);", permissionID, userID)
 	if err != nil {
 		log.Println(err)
 		return false
 	}
+	res.Close()
 	return true
 }
 
@@ -315,11 +318,12 @@ func (db *Mysql_db) removeUserbyID(userID int) bool {
 		return false
 	}
 
-	_, err := db.db.Query("DELETE FROM users WHERE userID = ? ", userID)
+	res, err := db.db.Query("DELETE FROM users WHERE userID = ? ", userID)
 	if err != nil {
 		log.Println(err)
 		return false
 	}
+	res.Close()
 	return true
 }
 
@@ -328,41 +332,44 @@ func (db *Mysql_db) removeUserbyName(username string) bool {
 		return false
 	}
 
-	_, err := db.db.Query("DELETE FROM users WHERE userName = ? ", username)
+	res, err := db.db.Query("DELETE FROM users WHERE userName = ? ", username)
 	if err != nil {
 		log.Println(err)
 		return false
 	}
+	res.Close()
 	return true
 
 }
 
 func (db *Mysql_db) removeToken(tokenValue string) bool {
-	_, err := db.db.Query("DELETE FROM tokens WHERE token = ?", tokenValue)
+	res, err := db.db.Query("DELETE FROM tokens WHERE token = ?", tokenValue)
 	if err != nil {
 		log.Println(err)
 		return false
 	}
+	res.Close()
 	return true
 }
 
 func (db *Mysql_db) changeUsernameByToken(token string, newUsername string) bool {
 	user := db.getUserByToken(token)
 
-	_, err := db.db.Query("UPDATE users SET userName = ? where UserID = ?;", newUsername, user.ID)
+	res, err := db.db.Query("UPDATE users SET userName = ? where UserID = ?;", newUsername, user.ID)
 	if err != nil {
 		log.Println(err)
 		return false
 	}
-
+	res.Close()
 	return true
 }
 
 func (db *Mysql_db) addCamera(url string, name string) {
-	_, err := db.db.Query("INSERT INTO cameras (url, name) VALUES (?, ?)", url, name)
+	res, err := db.db.Query("INSERT INTO cameras (url, name) VALUES (?, ?)", url, name)
 	if err != nil {
 		log.Println(err)
 	}
+	res.Close()
 }
 
 // Methods for handling live player layout for each user.
@@ -385,11 +392,12 @@ func (db *Mysql_db) getCameraLayout(userID int, cameraID int) layout {
 func (db *Mysql_db) setCameraLayout(userID int, cameraID int, width int, height int, posx int, posy int) bool {
 
 	db.db.Query("DELETE FROM livePlayers WHERE cameraID = ?;", cameraID)
-	_, err := db.db.Query("INSERT INTO livePlayers (userID, cameraID, width, height, posX, posY) VALUES (?, ?, ?, ?, ?, ?);", userID, cameraID, width, height, posx, posy)
+	res, err := db.db.Query("INSERT INTO livePlayers (userID, cameraID, width, height, posX, posY) VALUES (?, ?, ?, ?, ?, ?);", userID, cameraID, width, height, posx, posy)
 	if err != nil {
 		log.Println(err)
 		return false
 	}
+	res.Close()
 	return true
 
 }

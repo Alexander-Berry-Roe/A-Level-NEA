@@ -51,9 +51,8 @@ func main() {
 	r.HandleFunc("/api/getAccountMenu", getAccountMenuOptions).Methods("GET")
 	r.HandleFunc("/api/setOwnUsername", changeOwnUsername).Methods("POST")
 	r.HandleFunc("/api/getAllStreams", apiGetStreamUrls).Methods("GET")
-	r.HandleFunc("/api/setStreamLocation", apiSetLocation).Methods("POST")
-	r.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("static"))))
-
+	r.HandleFunc("/api/getCameraListSideMenu", apiGetCameraListSideMenu).Methods("GET")
+	r.HandleFunc("/api/getCameraSettings", apiGetCameraSettings).Methods("GET")
 	//Starts the webserver
 
 	log.Println("Server listening on " + srv.Addr)

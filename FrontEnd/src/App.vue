@@ -1,12 +1,6 @@
 <template>
 
-    
-    <div id="app">
-        <navbar :username="this.username" 
-            @logoutOpen="logoutPrompt = true"
-        >
-        </navbar>
-    </div>
+
     
 
     <transition name="fade">
@@ -32,6 +26,13 @@
         </popup>
     </transition>
     <live-video/>
+        
+    <div id="app">
+        <navbar :username="this.username" 
+            @logoutOpen="logoutPrompt = true"
+        >
+        </navbar>
+    </div>
 
 </template>
 

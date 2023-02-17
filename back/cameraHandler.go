@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -27,6 +28,7 @@ type Monitor struct {
 	mediaTag         int
 	restartCounter   int
 	automaticRestart bool
+	exp              int
 }
 
 type cameraRequest struct {
@@ -125,11 +127,11 @@ func (monitor *Monitor) captureCamera(dir string) {
 
 	monitor.running = true
 	//FFMPEG command to capture video stream and save to HLS format the playlist file is returned to go via the stdpipe
-	cmd := exec.Command("ffmpeg", "-fflags", "nobuffer",
+	cmd := exec.Command("ffmpeg", "-hwaccel", "vaapi", "-fflags", "nobuffer",
 		"-rtsp_transport", "tcp", "-i", monitor.url, "-vsync", "0", "-copyts", "-vcodec",
 		"copy", "-movflags", "frag_keyframe+empty_moov", "-an", "-hls_flags", "delete_segments+append_list", "-f",
 		"segment", "-segment_list_flags", "live", "-segment_time", "4", "-segment_list_size", "1", "-segment_format", "mpegts",
-		"-segment_list", "pipe:1", "-segment_list_type", "m3u8", "stream/"+dir+"/%d.ts", "-vf", "fps=1/8", "-update", "1", "stream/png/"+strconv.Itoa(monitor.id)+".png", "-y")
+		"-segment_list", "pipe:1", "-segment_list_type", "m3u8", "stream/"+dir+"/%d.ts")
 
 	//Open the stdout pipe
 	stdout, _ := cmd.StdoutPipe()
@@ -143,8 +145,10 @@ func (monitor *Monitor) captureCamera(dir string) {
 	var duration float64
 
 	automaticRestartStop := make(chan int)
+	automaticCaptureCamera := make(chan int)
 	//Starts the automatic restart if not already started.
 	go monitor.automaticCameraReconecter(automaticRestartStop)
+	go monitor.captureImage(automaticCaptureCamera)
 
 	//Scans every line of the playlist file and converts it to a series of recoridng records.
 	for {
@@ -152,9 +156,10 @@ func (monitor *Monitor) captureCamera(dir string) {
 		//checks for stopping command
 		case <-monitor.control:
 			automaticRestartStop <- 0
+			automaticCaptureCamera <- 0
+			cmd.Process.Signal(syscall.SIGTERM)
+			time.Sleep(5 * time.Second)
 			cmd.Process.Kill()
-			monitor.running = false
-			log.Println("STOPPING CAPTURE")
 			return
 		default:
 
@@ -176,7 +181,7 @@ func (monitor *Monitor) captureCamera(dir string) {
 				} else if m[0:1] != "#" {
 					location := "/stream/" + dir + "/" + m
 					tempPlaylistStore += location + "\n"
-					db.createRecordingRecord(monitor.id, time.Now().Unix()-int64(duration), time.Now().Unix(), duration, location, false)
+					db.createRecordingRecord(monitor.id, time.Now().Unix()-int64(duration), time.Now().Unix(), duration, location, false, time.Now().Unix()+int64(monitor.exp))
 					monitor.mediaTag += 1
 				} else {
 					tempPlaylistStore += m + "\n"
@@ -245,10 +250,11 @@ func (monitor *Monitor) restartCapture() {
 	monitor.startCapture()
 }
 
-func (monitors *Monitors) addMonitor(id int, url string) {
+func (monitors *Monitors) addMonitor(id int, url string, exp int) {
 	var newMonitor Monitor
 	newMonitor.id = id
 	newMonitor.url = url
+	newMonitor.exp = exp
 	newMonitor.control = make(chan int)
 	monitors.listofMonitors.add(newMonitor)
 
@@ -257,7 +263,7 @@ func (monitors *Monitors) addMonitor(id int, url string) {
 func (monitors *Monitors) loadCameras() {
 	cameras := db.get_camera_list()
 	for _, e := range cameras {
-		monitors.addMonitor(e.id, e.url)
+		monitors.addMonitor(e.id, e.url, e.exp)
 		if e.enabled {
 			monitors.startCapture(e.id)
 		}
@@ -340,6 +346,7 @@ func (Monitors *Monitors) reload(id int) error {
 func (monitor *Monitor) automaticCameraReconecter(control chan int) {
 	unchangedCounter := 0
 	mediaTagTemp := monitor.mediaTag
+	waitForStop := false
 	for {
 		select {
 		case <-control:
@@ -353,13 +360,47 @@ func (monitor *Monitor) automaticCameraReconecter(control chan int) {
 				mediaTagTemp = monitor.mediaTag
 			}
 
-			if unchangedCounter >= 10 {
+			if unchangedCounter >= 10 && !waitForStop {
 				log.Println("ALERT: Capture hasn't advanced for over 10 seconds will attempt restart")
 				monitor.restartCounter += 1
 				go monitor.restartCapture()
-				return
+				waitForStop = true
+
 			}
 			time.Sleep(1 * time.Second)
 		}
+	}
+}
+
+func (monitor *Monitor) captureImage(control chan int) {
+	lastCapTime := time.Now().Unix()
+	for {
+		select {
+		case <-control:
+			return
+		default:
+			if (time.Now().Unix() - lastCapTime) == 20 {
+				lastCapTime = time.Now().Unix()
+				cmd := exec.Command("ffmpeg", "-rtsp_transport", "tcp", "-y", "-i", monitor.url, "-vframes", "1", "stream/jpeg/"+strconv.Itoa(monitor.id)+".jpeg")
+				cmd.Run()
+			} else {
+				time.Sleep(50)
+			}
+		}
+
+	}
+
+}
+
+func (monitors *Monitors) automaticDelete() {
+	for {
+		timeNow := time.Now().Unix()
+		expiredRecordings := db.getExpiredRecords(timeNow)
+		for _, e := range expiredRecordings {
+			os.Remove("." + e.location)
+
+		}
+		db.deleteExpiredRecords(timeNow)
+		time.Sleep(10 * time.Second)
 	}
 }

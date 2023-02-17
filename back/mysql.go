@@ -17,13 +17,17 @@ type camera struct {
 	url     string
 	name    string
 	enabled bool
+	exp     int
 }
 
 type recordingSegment struct {
-	start    int64
-	end      int64
-	duration float64
-	location string
+	cameraID  int
+	start     int64
+	end       int64
+	duration  float64
+	location  string
+	protected bool
+	exp       int64
 }
 
 // Opens the connection pool
@@ -35,8 +39,8 @@ func (mysql_db *Mysql_db) open_db(username string, password string, address stri
 	}
 	//Set connection pool parameters
 	db.SetConnMaxLifetime(time.Hour)
-	db.SetMaxOpenConns(1000)
-	db.SetMaxIdleConns(10)
+	db.SetMaxOpenConns(100)
+	db.SetMaxIdleConns(100)
 
 	mysql_db.db = db
 
@@ -54,6 +58,7 @@ func (db *Mysql_db) getPermissionID(permissionName string) int {
 	for res.Next() {
 		res.Scan(&id)
 	}
+	res.Close()
 	return id
 }
 
@@ -61,7 +66,7 @@ func (db *Mysql_db) getPermissionID(permissionName string) int {
 func (mysql_db *Mysql_db) get_camera_list() []camera {
 	var cameras []camera
 
-	res, err := mysql_db.db.Query("SELECT CameraID, url, name, enabled from cameras;")
+	res, err := mysql_db.db.Query("SELECT CameraID, url, name, enabled, defaultExp from cameras;")
 
 	if err != nil {
 		log.Println(err)
@@ -71,7 +76,7 @@ func (mysql_db *Mysql_db) get_camera_list() []camera {
 
 	//Adds the list of cameras from the database to the array
 	for res.Next() {
-		res.Scan(&camera.id, &camera.url, &camera.name, &camera.enabled)
+		res.Scan(&camera.id, &camera.url, &camera.name, &camera.enabled, &camera.exp)
 		cameras = append(cameras, camera)
 	}
 
@@ -80,8 +85,8 @@ func (mysql_db *Mysql_db) get_camera_list() []camera {
 
 }
 
-func (mysql_db *Mysql_db) createRecordingRecord(cameraID int, start int64, end int64, duration float64, location string, protected bool) {
-	res, err := mysql_db.db.Query("INSERT INTO recordings (CameraID, start, end, duration, location, protected) VALUES (?, ?, ?, ?, ?, ?);", cameraID, start, end, duration, location, protected)
+func (mysql_db *Mysql_db) createRecordingRecord(cameraID int, start int64, end int64, duration float64, location string, protected bool, exp int64) {
+	res, err := mysql_db.db.Query("INSERT INTO recordings (CameraID, start, end, duration, location, protected, exp) VALUES (?, ?, ?, ?, ?, ?, ?);", cameraID, start, end, duration, location, protected, exp)
 	if err != nil {
 		log.Println(err)
 		return
@@ -127,20 +132,45 @@ func (mysql_db *Mysql_db) getLiveSegments(id int64) []recordingSegment {
 //Set and get Resolution
 
 func (mysql_db *Mysql_db) setResolution(resoltion []int, cameraID int) {
-	_, err := mysql_db.db.Query("UPDATE cameras SET width = ? , height = ? WHERE CameraID = ?;", resoltion[0], resoltion[1], cameraID)
+	res, err := mysql_db.db.Query("UPDATE cameras SET width = ? , height = ? WHERE CameraID = ?;", resoltion[0], resoltion[1], cameraID)
 	if err != nil {
 		log.Println(err)
 	}
+	res.Close()
 }
 
 func (mysql_db *Mysql_db) getResolution(cameraID int) []int {
 	var resolution []int
-	res, err := mysql_db.db.Query("SELECT (width, height) FROM cmaeras WHERE CameraID = ?", cameraID)
+	res, err := mysql_db.db.Query("SELECT (width, height) FROM cmaeras WHERE CameraID = ?;", cameraID)
 	if err != nil {
 		log.Println(err)
 	}
 	res.Scan(resolution[0], resolution[1])
-
+	res.Close()
 	return resolution
+}
 
+func (mysql_db *Mysql_db) getExpiredRecords(time int64) []recordingSegment {
+	var recordingList []recordingSegment
+	res, err := mysql_db.db.Query("SELECT cameraID, start, end, duration, location, protected, exp FROM recordings WHERE exp <= ?;", time)
+	if err != nil {
+		log.Println(err)
+		return recordingList
+	}
+
+	for res.Next() {
+		var segment recordingSegment
+		res.Scan(&segment.cameraID, &segment.start, &segment.end, &segment.duration, &segment.location, &segment.protected, &segment.exp)
+		recordingList = append(recordingList, segment)
+	}
+	res.Close()
+	return recordingList
+}
+
+func (mysql_db *Mysql_db) deleteExpiredRecords(time int64) {
+	res, err := mysql_db.db.Query("DELETE FROM recordings WHERE exp <= ?;", time)
+	if err != nil {
+		log.Println(err)
+	}
+	res.Close()
 }
