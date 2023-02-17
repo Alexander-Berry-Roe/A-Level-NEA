@@ -20,10 +20,10 @@ var config configFormat
 func loadConfig(configFile string) configFormat {
 	data, err := ioutil.ReadFile(configFile)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	if err := config.Parse(data); err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	return config
 }
