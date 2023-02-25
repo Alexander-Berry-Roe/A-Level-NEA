@@ -361,7 +361,7 @@ func (monitor *Monitor) automaticCameraReconecter(control chan int) {
 				mediaTagTemp = monitor.mediaTag
 			}
 
-			//If camera hasn't advanced for 10 iterations then
+			//If camera hasn't advanced for 10 iterations then restart capture
 			if unchangedCounter >= 10 && !waitForStop {
 				log.Println("ALERT: Capture hasn't advanced for over 10 seconds will attempt restart")
 				monitor.restartCounter += 1
@@ -388,7 +388,7 @@ func (monitor *Monitor) captureImage(control chan int) {
 				cmd.Run()
 			} else {
 				//Sleep for 50ms to reduce cpu usage
-				time.Sleep(50)
+				time.Sleep(50 * time.Millisecond)
 			}
 		}
 
