@@ -353,10 +353,13 @@ func (monitor *Monitor) automaticCameraReconecter(control chan int) {
 		case <-control:
 			return
 		default:
+			//Checks if vdieo has advanaced
 			if monitor.mediaTag == mediaTagTemp {
+				//Increment if not advanaced
 				unchangedCounter += 1
 
 			} else {
+				//
 				unchangedCounter = 0
 				mediaTagTemp = monitor.mediaTag
 			}
@@ -369,6 +372,7 @@ func (monitor *Monitor) automaticCameraReconecter(control chan int) {
 				waitForStop = true
 
 			}
+			//Sleep for one second to
 			time.Sleep(1 * time.Second)
 		}
 	}
