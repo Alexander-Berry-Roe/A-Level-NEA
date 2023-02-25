@@ -21,12 +21,13 @@ func main() {
 
 	r := mux.NewRouter()
 
-	//
-	db = Mysql_db{}
 
 	//Load the configuration file into memory
 	config := loadConfig("config.yaml")
-
+	
+	//Creating instance of the Mysql class (this needs changing the cammel casing asap).
+	db = Mysql_db{}
+	
 	//Open conneciton with database
 	db.open_db(config.Mysql_username, config.Mysql_password, config.Mysql_address, config.Mysql_database)
 
