@@ -21,6 +21,38 @@
 
 </template>
 
+<script>
+import axios from 'axios'
+export default {
+  props: ['username'],
+  data() {
+    return {
+      newUsername: "",
+      showUsernameError: false
+    }
+  },
+  methods: {
+    refresh() {
+      this.newUsername = this.username
+    },
+    changeUsername() {
+      axios.post('/api/setOwnUsername', {
+        username: this.newUsername
+      }).then(response => {
+        if (response.data.success) {
+          this.emitter.emit("reloadUserInfo")
+          this.showUsernameError=false
+        } else {
+          this.showUsernameError=true
+        }
+      } )
+    }
+  },
+  mounted() {
+        this.emitter.on("openAccountMenu", this.refresh);
+    }
+}
+</script>
 
 
 <style scoped>
