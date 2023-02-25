@@ -129,7 +129,7 @@ func (mysql_db *Mysql_db) getLiveSegments(id int64) []recordingSegment {
 
 }
 
-//Set and get Resolution
+//No longer in use rem
 
 func (mysql_db *Mysql_db) setResolution(resoltion []int, cameraID int) {
 	res, err := mysql_db.db.Query("UPDATE cameras SET width = ? , height = ? WHERE CameraID = ?;", resoltion[0], resoltion[1], cameraID)

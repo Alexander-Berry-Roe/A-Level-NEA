@@ -128,6 +128,9 @@ func getAccountMenuOptions(w http.ResponseWriter, r *http.Request) {
 		response = append(response, option)
 	}
 
+	option.Title = "View recordings"
+	response = append(response, option)
+
 	option.Title = "Logout"
 	response = append(response, option)
 

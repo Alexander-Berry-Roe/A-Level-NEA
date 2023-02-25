@@ -20,8 +20,15 @@
     </transition>
     <transition name="fade">
        <popup v-show="cameraSettings">
-            <menuContainer @close="bigLivePlayer = cameraSettings = false">
+            <menuContainer @close="cameraSettings = false">
                 <cameraMenu/>
+            </menuContainer>
+        </popup>
+    </transition>
+    <transition name="fade">
+       <popup v-show="viewRecordedPlayer">
+            <menuContainer @close="viewRecordedPlayer = false">
+                <recordedPlayer/>
             </menuContainer>
         </popup>
     </transition>
@@ -59,6 +66,7 @@ import Modal from './components/modal.vue';
 import { draggable } from 'vuedraggable';
 import liveVideo from './components/livePlayer.vue';
 import cameraMenu from './components/cameraMenu.vue';
+import recordedPlayer from './components/recordedPlayer.vue'
 
 
 export default {
@@ -73,7 +81,8 @@ export default {
         draggable,
         Modal,
         liveVideo, 
-        cameraMenu
+        cameraMenu,
+        recordedPlayer
     },
     data() {
         return {
@@ -83,7 +92,8 @@ export default {
             logoutPrompt: false,
             accountMenuList: [],
             accountSettingsShow: false,
-            cameraSettings: false
+            cameraSettings: false,
+            viewRecordedPlayer: false
 
 
         }

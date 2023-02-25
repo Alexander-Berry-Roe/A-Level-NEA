@@ -106,6 +106,27 @@ import popup from "./popup.vue";
           }, 500);
 
         })
+      },
+      stopStreams() {
+        this.streams.forEach(video => {
+          const player = this.$refs[`video-${video.id}`][0]
+
+          player.pause();
+          player.currentTime = 0;
+        })
+      },
+      restartAllStreams() {
+        this.stopStreams();
+        
+        this.streams = []
+        axios
+        .get("/api/getAllStreams").then((response) => {
+          for (let i = 0; i < response.data.length; i++) {
+            this.streams.push({id: response.data[i].id, url: response.data[i].live, controls: false, cameraName: response.data[i].Name})
+
+        }
+        this.clicked = true
+      })
       } 
     },
     mounted() {

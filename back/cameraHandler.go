@@ -343,6 +343,7 @@ func (Monitors *Monitors) reload(id int) error {
 	return nil
 }
 
+// This is used to restart camera capture when a disconnect is detected.
 func (monitor *Monitor) automaticCameraReconecter(control chan int) {
 	unchangedCounter := 0
 	mediaTagTemp := monitor.mediaTag
@@ -360,6 +361,7 @@ func (monitor *Monitor) automaticCameraReconecter(control chan int) {
 				mediaTagTemp = monitor.mediaTag
 			}
 
+			//If camera hasn't advanced for 10 iterations then
 			if unchangedCounter >= 10 && !waitForStop {
 				log.Println("ALERT: Capture hasn't advanced for over 10 seconds will attempt restart")
 				monitor.restartCounter += 1
@@ -372,6 +374,7 @@ func (monitor *Monitor) automaticCameraReconecter(control chan int) {
 	}
 }
 
+// This is used to automatically
 func (monitor *Monitor) captureImage(control chan int) {
 	lastCapTime := time.Now().Unix()
 	for {
@@ -379,11 +382,12 @@ func (monitor *Monitor) captureImage(control chan int) {
 		case <-control:
 			return
 		default:
-			if (time.Now().Unix() - lastCapTime) == 20 {
+			if (time.Now().Unix() - lastCapTime) == 60 {
 				lastCapTime = time.Now().Unix()
 				cmd := exec.Command("ffmpeg", "-rtsp_transport", "tcp", "-y", "-i", monitor.url, "-vframes", "1", "stream/jpeg/"+strconv.Itoa(monitor.id)+".jpeg")
 				cmd.Run()
 			} else {
+				//Sleep for 50ms to reduce cpu usage
 				time.Sleep(50)
 			}
 		}
@@ -392,15 +396,19 @@ func (monitor *Monitor) captureImage(control chan int) {
 
 }
 
+// Automatic delete expired records
 func (monitors *Monitors) automaticDelete() {
 	for {
 		timeNow := time.Now().Unix()
 		expiredRecordings := db.getExpiredRecords(timeNow)
+
+		//Loop the iterates over the entire expiredRecordings array
 		for _, e := range expiredRecordings {
 			os.Remove("." + e.location)
-
 		}
+		//Removes expired records from database
 		db.deleteExpiredRecords(timeNow)
+		//Sleep is used to reduce the number of database requests.
 		time.Sleep(10 * time.Second)
 	}
 }

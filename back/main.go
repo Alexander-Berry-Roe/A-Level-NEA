@@ -12,8 +12,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type camera_proxy struct {
-}
 
 var db Mysql_db
 
