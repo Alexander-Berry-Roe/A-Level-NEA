@@ -25,7 +25,7 @@ func main() {
 	config := loadConfig("config.yaml")
 
 	//Open conneciton with database
-	db.open_db(config.Mysql_username, config.Mysql_password, config.Mysql_address, config.Mysql_database)
+	db.openDb(config.Mysql_username, config.Mysql_password, config.Mysql_address, config.Mysql_database)
 
 	//Set all requests to use authentication middleware
 	r.Use(authMiddleware)

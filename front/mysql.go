@@ -3,12 +3,13 @@ package main
 import (
 	"database/sql"
 	"log"
+	"os"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 )
 
-type user_template struct {
+type userTemplate struct {
 	ID        int
 	pass_hash string
 	username  string
@@ -20,7 +21,7 @@ type token_template struct {
 	exp     int
 }
 
-type camera_template struct {
+type cameraTemplate struct {
 	id         int
 	url        string
 	name       string
@@ -53,11 +54,13 @@ type Mysql_db struct {
 }
 
 // Open databse connection, must be called before any other methods is called
-func (mysql_db *Mysql_db) open_db(username string, password string, address string, database string) {
+func (mysql_db *Mysql_db) openDb(username string, password string, address string, database string) {
 
 	db, err := sql.Open("mysql", username+":"+password+"@tcp("+address+")/"+database)
 	if err != nil {
-		log.Println(err)
+		log.Fatalln("Unable to connect to database, check if the database is running and/or the database conection settings are correct")
+		os.Exit(1)
+
 	}
 
 	//Sets database up databse connection pool settings
@@ -163,9 +166,9 @@ func (database *Mysql_db) allowToken(token string, userID int, exp int) {
 }
 
 // Return the user record from the database
-func (database *Mysql_db) getUser(user_ID int) user_template {
+func (database *Mysql_db) getUser(user_ID int) userTemplate {
 
-	var user user_template
+	var user userTemplate
 
 	res, err := database.db.Query("SELECT UserID, passHash, userName FROM users WHERE username = ?", user_ID)
 	if err != nil {
@@ -183,9 +186,9 @@ func (database *Mysql_db) getUser(user_ID int) user_template {
 
 // Add a record to the camera table
 
-func (database *Mysql_db) getCamera(ID string) camera_template {
+func (database *Mysql_db) getCamera(ID string) cameraTemplate {
 
-	var camera camera_template
+	var camera cameraTemplate
 
 	res, err := database.db.Query("SELECT (CameraID, url, name) FROM cameras WHERE ID = ?", ID)
 	if err != nil {
@@ -201,15 +204,15 @@ func (database *Mysql_db) getCamera(ID string) camera_template {
 	return camera
 }
 
-func (database *Mysql_db) getAllMointors() []camera_template {
-	var cameras []camera_template
+func (database *Mysql_db) getAllMointors() []cameraTemplate {
+	var cameras []cameraTemplate
 
 	res, err := database.db.Query("SELECT CameraID, url, name, height, width, enabled, defaultExp FROM cameras;")
 	if err != nil {
 		println(err)
 	}
 
-	var tempcamera camera_template
+	var tempcamera cameraTemplate
 	for res.Next() {
 		res.Scan(&tempcamera.id, &tempcamera.url, &tempcamera.name, &tempcamera.height, &tempcamera.width, &tempcamera.enabled, &tempcamera.defaultExp)
 		cameras = append(cameras, tempcamera)
@@ -239,10 +242,10 @@ func (database *Mysql_db) getRecordings(CameraID string, Start int, End int) []r
 
 }
 
-func (db *Mysql_db) getUserByUsername(username string) user_template {
-	var user user_template
+func (db *Mysql_db) getUserByUsername(username string) userTemplate {
+	var user userTemplate
 
-	res, err := db.db.Query("SELECT UserID, userName, passHash from users where userName = ?", username)
+	res, err := db.db.Query("SELECT UserID, userName, passHash from users where userName = ?;", username)
 	if err != nil {
 		log.Println(err)
 	}
@@ -254,8 +257,8 @@ func (db *Mysql_db) getUserByUsername(username string) user_template {
 	return user
 }
 
-func (db *Mysql_db) getUserByToken(token string) user_template {
-	var user user_template
+func (db *Mysql_db) getUserByToken(token string) userTemplate {
+	var user userTemplate
 
 	res, err := db.db.Query("SELECT users.userID, users.userName, users.passHash FROM users, tokens WHERE users.userID = tokens.userID AND tokens.token = ?;", token)
 	if err != nil {
