@@ -58,7 +58,7 @@ func (mysql_db *Mysql_db) openDb(username string, password string, address strin
 
 	db, err := sql.Open("mysql", username+":"+password+"@tcp("+address+")/"+database)
 	if err != nil {
-		log.Fatalln("Unable to connect to database, check if the database is running and/or the database conection settings are correct")
+		log.Fatalln("Unable to connect to databas")
 		os.Exit(1)
 
 	}
