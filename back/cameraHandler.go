@@ -61,6 +61,7 @@ func (monitors *Monitors) getMonitorById(id int) *Monitor {
 	return &empty
 }
 
+// Checks if monitor exits
 func (monitors *Monitors) getExists(id int) bool {
 	for _, e := range monitors.listofMonitors.toArray() {
 		if e.id == id {
@@ -70,7 +71,7 @@ func (monitors *Monitors) getExists(id int) bool {
 	return false
 }
 
-// Resoultion methods.
+// Get resolution of camera by probing camera.
 func (monitor *Monitor) getResolution() ([]int, error) {
 	cmd := exec.Command("ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height", "-of", "csv=s=x:p=0", monitor.url)
 	stdout, err := cmd.StdoutPipe()
@@ -110,10 +111,6 @@ func (monitor *Monitor) getResolution() ([]int, error) {
 	return resoltionArray, nil
 }
 
-func (monitor *Monitor) getResolutionFromDB() []int {
-	return db.getResolution(monitor.id)
-}
-
 func (monitor *Monitor) captureCamera(dir string) {
 
 	resolution, err := monitor.getResolution()
@@ -146,7 +143,7 @@ func (monitor *Monitor) captureCamera(dir string) {
 
 	automaticRestartStop := make(chan int)
 	automaticCaptureCamera := make(chan int)
-	//Starts the automatic restart if not already started.
+
 	go monitor.automaticCameraReconecter(automaticRestartStop)
 	go monitor.captureImage(automaticCaptureCamera)
 
@@ -193,6 +190,7 @@ func (monitor *Monitor) captureCamera(dir string) {
 	}
 }
 
+// Method to start video capture takes id of camera to start
 func (monitors *Monitors) startCapture(id int) error {
 
 	if monitors.getMonitorById(id).running {
@@ -203,6 +201,7 @@ func (monitors *Monitors) startCapture(id int) error {
 
 }
 
+// Method to start vidoe capture, called on Monitor type so no video ID needed
 func (monitor *Monitor) startCapture() error {
 	dir := strconv.Itoa(monitor.id)
 	createDir("stream/" + strconv.Itoa(monitor.id))
@@ -414,5 +413,11 @@ func (monitors *Monitors) automaticDelete() {
 		db.deleteExpiredRecords(timeNow)
 		//Sleep is used to reduce the number of database requests.
 		time.Sleep(10 * time.Second)
+	}
+}
+
+func (monitors *Monitors) stopAllCapture() {
+	for i, _ := range monitors.listofMonitors.toArray() {
+		monitors.listofMonitors.toArray()[i].stopCapture()
 	}
 }
