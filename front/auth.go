@@ -174,7 +174,6 @@ func doPasswordsMatch(hashedPassword, currPassword string) bool {
 func checkPermissions(r *http.Request, permissionName string) bool {
 	token, err := r.Cookie("session_token")
 	if err != nil {
-		log.Println(err)
 		return false
 	}
 
