@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log"
 	"os"
+	"strconv"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -367,40 +368,54 @@ func (db *Mysql_db) changeUsernameByToken(token string, newUsername string) bool
 	return true
 }
 
-func (db *Mysql_db) addCamera(url string, name string) {
-	res, err := db.db.Query("INSERT INTO cameras (url, name) VALUES (?, ?)", url, name)
+// Add camera
+func (db *Mysql_db) addCamera(url string, name string, defaultExp int) {
+	res, err := db.db.Query("INSERT INTO cameras (url, name, defaultExp, enabled) VALUES (?, ?, ?, true)", url, name, defaultExp)
 	if err != nil {
 		log.Println(err)
 	}
 	res.Close()
 }
 
-// Methods for handling live player layout for each user.
-func (db *Mysql_db) getCameraLayout(userID int, cameraID int) layout {
-	var response layout
-	response.empty = true
-	res, err := db.db.Query("SELECT width, height, posX, posY FROM livePlayers WHERE userID = ? AND cameraID = ? ", userID, cameraID)
+// Remvoe camera
+func (db *Mysql_db) removeCamera(id int) {
+	res, err := db.db.Query("DELETE FROM cameras WHERE CameraID = ?;", id)
 	if err != nil {
 		log.Println(err)
-	}
-	if res.Next() {
-		response.empty = false
-		res.Scan(&response.width, &response.height, &response.posX, &response.posY)
+		return
 	}
 	res.Close()
-	return response
 }
 
-// Unused TO BE DLETED LATTER AFTER DOCUMENTATION.
-func (db *Mysql_db) setCameraLayout(userID int, cameraID int, width int, height int, posx int, posy int) bool {
+func (db *Mysql_db) updateCamera(id int, cameraName string, cameraUrl string, cameraExp int) {
+	res, err := db.db.Query("UPDATE cameras SET url = ?, name = ?, defaultExp = ? WHERE CameraID = ?;", cameraUrl, cameraName, cameraExp, id)
 
-	db.db.Query("DELETE FROM livePlayers WHERE cameraID = ?;", cameraID)
-	res, err := db.db.Query("INSERT INTO livePlayers (userID, cameraID, width, height, posX, posY) VALUES (?, ?, ?, ?, ?, ?);", userID, cameraID, width, height, posx, posy)
 	if err != nil {
 		log.Println(err)
-		return false
 	}
 	res.Close()
-	return true
+}
 
+func (db *Mysql_db) getAllCameraIDs() []int {
+	var cameraIDs []int
+	res, err := db.db.Query("SELECT CameraID from cameras;")
+	if err != nil {
+		return nil
+	}
+	for res.Next() {
+		var idStr string
+		err = res.Scan(&idStr)
+		if err != nil {
+			return nil
+		}
+
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			return nil
+		}
+
+		cameraIDs = append(cameraIDs, id)
+	}
+
+	return cameraIDs
 }

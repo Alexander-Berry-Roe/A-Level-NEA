@@ -293,7 +293,7 @@ func (monitor *Monitor) generateLivePlaylist() string {
 
 	var playlist string
 
-	playlist = "#EXTM3U\n#EXT-X-VERSION:3\n#EXT-X-ALLOW-CACHE:NO\n#EXT-X-TARGETDURATION:4\n"
+	playlist = "#EXTM3U\n#EXT-X-VERSION:3\n#EXT-X-TARGETDURATION:4\n"
 
 	playlist = playlist + "#EXT-X-MEDIA-SEQUENCE:" + strconv.Itoa(monitor.mediaTag) + "\n"
 
@@ -416,7 +416,14 @@ func (monitors *Monitors) automaticDelete() {
 	}
 }
 
-func (monitors *Monitors) stopAllCapture() {
+// Restart All captures
+func (monitors *Monitors) restartAll() {
+	monitors.stopAll()
+	monitors.loadCameras()
+}
+
+// Stops all camera captures
+func (monitors *Monitors) stopAll() {
 	for i, _ := range monitors.listofMonitors.toArray() {
 		monitors.listofMonitors.toArray()[i].stopCapture()
 	}

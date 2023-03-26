@@ -63,7 +63,6 @@ import accountSettings from "./components/accountSettings.vue";
 import menuContainer from "./components/menuContainer.vue";
 import VModal from 'vue-js-modal';
 import Modal from './components/modal.vue';
-import { draggable } from 'vuedraggable';
 import liveVideo from './components/livePlayer.vue';
 import cameraMenu from './components/cameraMenu.vue';
 import recordedPlayer from './components/recordedPlayer.vue'
@@ -78,7 +77,6 @@ export default {
         accountSettings,
         menuContainer,
         VModal,
-        draggable,
         Modal,
         liveVideo, 
         cameraMenu,

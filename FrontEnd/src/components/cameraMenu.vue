@@ -30,7 +30,7 @@
         </div>
       
     </div>
-    <button class="save-button">
+    <button class="save-button" @click="save()">
         Save
     </button>
     <button class="delete-button" @click="deleteCamera(selctedCamera)">
@@ -67,12 +67,18 @@ export default {
         this.cameras.splice(index, 1);
         this.selctedCamera = {};
       }
+
     },
     addCamera() {
-      this.cameras.push({Name:'New Camera'})
+      this.cameras.push({cameraID: -1 ,Name:'New Camera'})
     },
     save() {
-      
+      const response = []
+      for (let i = 0; i < this.cameras.length; i++) {
+        response.push({cameraID: this.cameras[i].cameraID, cameraName: this.cameras[i].Name, cameraUrl: this.cameras[i].CameraUrl, recordingTime: this.cameras[i].RecordingTime})
+      }
+      axios.post("/api/setCameraSettings", response)
+      location.reload()
     }
   },
   computed: {
@@ -90,7 +96,7 @@ export default {
     .get("/api/getCameraSettings")
     .then(response => {
       for (let i = 0; i < response.data.length; i++) {
-        this.cameras.push({CameraID: response.data[i].CameraID, Name: response.data[i].Name, CameraUrl: response.data[i].CameraUrl, RecordingTime: response.data[i].RecordingTime, selectionColor: 'none'})
+        this.cameras.push({cameraID: response.data[i].cameraID, Name: response.data[i].cameraName, CameraUrl: response.data[i].cameraUrl, RecordingTime: response.data[i].recordingTime, selectionColor: 'none'})
       }
     })
 

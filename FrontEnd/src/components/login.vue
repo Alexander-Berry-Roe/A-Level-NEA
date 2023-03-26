@@ -20,7 +20,7 @@
                     <input type="password" id="password" class="login-input" placeholder="password" v-model="password"/>
                 </div>
                 
-                <button class="input-group-button" @click="login()">Log in</button>
+                <button class="input-group-button" type="button" @click="login()">Log in</button>
 
 
             </div>
@@ -50,7 +50,7 @@ export default {
     methods: {
         login() {
 
-            this.loading = true
+
 
             axios({
                 method: 'post',
@@ -62,12 +62,15 @@ export default {
             })
             .then(response => {
 		        this.loggedin = response.data.auth
-                
+                console.log(this.loggedin)
                 if (this.loggedin) {
                     this.$emit('loggedIn')
+                    setTimeout(() => {
+                      location.reload();
+                    }, 100);
+
                  } else {
                     this.error = true
-                    this.loading = false
                     this.password = "";
                 }
              

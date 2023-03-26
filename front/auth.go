@@ -104,6 +104,8 @@ func checkUser(w http.ResponseWriter, r *http.Request) {
 			db.allowToken(token.Value, user.ID, int(time.Now().Unix()+3600))
 			resp.Set("auth", true)
 
+		} else {
+			resp.Set("auth", false)
 		}
 
 	} else {

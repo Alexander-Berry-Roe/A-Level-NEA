@@ -52,7 +52,8 @@ func main() {
 	r.HandleFunc("/api/setOwnUsername", changeOwnUsername).Methods("POST")
 	r.HandleFunc("/api/getAllStreams", apiGetStreamUrls).Methods("GET")
 	r.HandleFunc("/api/getCameraListSideMenu", apiGetCameraListSideMenu).Methods("GET")
-	r.HandleFunc("/api/setCameraSettings", apiSetCameraSettings)
+	r.HandleFunc("/api/setCameraSettings", apiSetCameraSettings).Methods("POST")
+	r.HandleFunc("/api/deleteCamera", apiDeleteCamera).Methods("POST")
 	r.HandleFunc("/api/getCameraSettings", apiGetCameraSettings).Methods("GET")
 	//Starts the webserver
 

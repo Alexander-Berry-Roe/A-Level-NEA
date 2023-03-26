@@ -16,8 +16,8 @@
 
                 <button class="navbar-account" @click="accountMenuOpen = !accountMenuOpen">
                      <h3>
-                        {{username}}
-                        <img src="./icons/arrow-down-sign-to-navigate.png"/>
+                        Settings 
+
                      </h3>
                 </button>
 

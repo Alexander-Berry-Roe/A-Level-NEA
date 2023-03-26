@@ -12,7 +12,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-
 var db Mysql_db
 
 var recordings Monitors
@@ -21,13 +20,12 @@ func main() {
 
 	r := mux.NewRouter()
 
-
 	//Load the configuration file into memory
 	config := loadConfig("config.yaml")
-	
+
 	//Creating instance of the Mysql class (this needs changing the cammel casing asap).
 	db = Mysql_db{}
-	
+
 	//Open conneciton with database
 	db.open_db(config.Mysql_username, config.Mysql_password, config.Mysql_address, config.Mysql_database)
 
@@ -44,7 +42,7 @@ func main() {
 		ReadTimeout:  15 * time.Second,
 	}
 
-	r.Path("/stream/record/{id:[0-9]+}/{start:[0-9]+}/{end:[0-9]+}").HandlerFunc(getRecordedPlaylist)
+	r.Path("/stream/record/{id:[0-9]+}/{start:[0-9]+}/{end:[0-9]+}.m3u8").HandlerFunc(getRecordedPlaylist)
 	//Sets up routing for POST requests.
 	r.HandleFunc("/api/startCapture", startCapture).Methods("POST")
 	r.HandleFunc("/api/stopCapture", stopCapture).Methods("POST")

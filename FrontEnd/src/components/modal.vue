@@ -3,10 +3,8 @@
     <div class="modal">
       <slot name="header">
       </slot>
-
       <slot name="body">
       </slot>
-
       <slot name="footer">
       </slot>
     </div>
@@ -29,10 +27,10 @@
     bottom: 0;
     left: 0;
     right: 0;
+    align-items: center;
     background-color: rgba(0, 0, 0, 0.3);
     display: flex;
     justify-content: center;
-    align-items: center;
   }
 
 .modal {
