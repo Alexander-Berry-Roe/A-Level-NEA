@@ -61,6 +61,7 @@ export default {
 
       }
     },
+    //Delete camera
     deleteCamera(selectedCamera) {
       const index = this.cameras.indexOf(selectedCamera);
       if (index > -1) {
@@ -69,9 +70,11 @@ export default {
       }
 
     },
+    //Add new camera
     addCamera() {
       this.cameras.push({cameraID: -1 ,Name:'New Camera'})
     },
+    //Save camera settings to server
     save() {
       const response = []
       for (let i = 0; i < this.cameras.length; i++) {
@@ -82,6 +85,7 @@ export default {
     }
   },
   computed: {
+    //To converts seconds to day
     recordingDays: {
       get() {
         return this.selctedCamera.RecordingTime / 86400;

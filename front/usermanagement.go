@@ -91,6 +91,7 @@ func apiGetOwnUserInfo(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// Used logout users
 func apiLogout(w http.ResponseWriter, r *http.Request) {
 	resp := simplejson.New()
 	token, err := r.Cookie("session_token")
@@ -98,6 +99,7 @@ func apiLogout(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
+	//Removes token from database
 	if db.removeToken(token.Value) {
 		resp.Set("success", true)
 	} else {
@@ -112,6 +114,7 @@ func apiLogout(w http.ResponseWriter, r *http.Request) {
 	w.Write(payload)
 }
 
+// Sends the cleint a list of options. This allows for certian options to be blocked for users without permsision
 func getAccountMenuOptions(w http.ResponseWriter, r *http.Request) {
 	var response []AccountMenuOption
 	_, err := r.Cookie("session_token")
@@ -141,6 +144,7 @@ func getAccountMenuOptions(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// Api funciton to change username
 func changeOwnUsername(w http.ResponseWriter, r *http.Request) {
 	resp := simplejson.New()
 	token, err := r.Cookie("session_token")
@@ -149,6 +153,7 @@ func changeOwnUsername(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	//Decode new username
 	var user NewUserName
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		log.Println(err)
@@ -170,7 +175,7 @@ func changeOwnUsername(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Panicln(err)
 	}
-
+	//Writes header and returns response to client
 	w.Header().Add("Content-Type", "application/json")
 	w.Write(payload)
 }

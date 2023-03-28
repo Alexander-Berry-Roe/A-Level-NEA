@@ -31,7 +31,7 @@ type recordingSegment struct {
 }
 
 // Opens the connection pool
-func (mysqlDb *MysqlDb) open_db(username string, password string, address string, database string) {
+func (mysqlDb *MysqlDb) openDb(username string, password string, address string, database string) {
 
 	db, err := sql.Open("mysql", username+":"+password+"@tcp("+address+")/"+database)
 	if err != nil {
@@ -63,7 +63,7 @@ func (db *MysqlDb) getPermissionID(permissionName string) int {
 }
 
 // Returns an array containing a list of cameras
-func (mysqlDb *MysqlDb) get_camera_list() []camera {
+func (mysqlDb *MysqlDb) getCameraList() []camera {
 	var cameras []camera
 
 	res, err := mysqlDb.db.Query("SELECT CameraID, url, name, enabled, defaultExp from cameras;")

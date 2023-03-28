@@ -27,7 +27,7 @@ func main() {
 	db = MysqlDb{}
 
 	//Open conneciton with database
-	db.open_db(config.MysqlUsername, config.MysqlPassword, config.MysqlAddress, config.MysqlDatabase)
+	db.openDb(config.MysqlUsername, config.MysqlPassword, config.MysqlAddress, config.MysqlDatabase)
 
 	recordings.loadCameras()
 	go recordings.automaticDelete()
@@ -55,6 +55,7 @@ func main() {
 	log.Fatal(srv.ListenAndServe())
 }
 
+// Intialises capture
 func startCapture(w http.ResponseWriter, r *http.Request) {
 	var cameras cameraRequest
 
@@ -69,6 +70,7 @@ func startCapture(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// API request to stop capture of a particular caemra
 func stopCapture(w http.ResponseWriter, r *http.Request) {
 	var cameras cameraRequest
 
@@ -84,6 +86,7 @@ func stopCapture(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// API function to get a live playlist for live streaming a particular camera
 func getLivePlaylists(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
 

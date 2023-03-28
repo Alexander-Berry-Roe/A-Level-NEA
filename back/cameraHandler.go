@@ -260,7 +260,7 @@ func (monitors *Monitors) addMonitor(id int, url string, exp int) {
 }
 
 func (monitors *Monitors) loadCameras() {
-	cameras := db.get_camera_list()
+	cameras := db.getCameraList()
 	for _, e := range cameras {
 		monitors.addMonitor(e.id, e.url, e.exp)
 		if e.enabled {

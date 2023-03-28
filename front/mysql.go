@@ -50,12 +50,12 @@ type layout struct {
 	posY   int
 }
 
-type Mysql_db struct {
+type MysqlDb struct {
 	db *sql.DB
 }
 
 // Open databse connection, must be called before any other methods is called
-func (mysql_db *Mysql_db) openDb(username string, password string, address string, database string) {
+func (MysqlDb *MysqlDb) openDb(username string, password string, address string, database string) {
 
 	db, err := sql.Open("mysql", username+":"+password+"@tcp("+address+")/"+database)
 	if err != nil {
@@ -69,7 +69,7 @@ func (mysql_db *Mysql_db) openDb(username string, password string, address strin
 	db.SetMaxOpenConns(100)
 	db.SetMaxIdleConns(100)
 
-	mysql_db.db = db
+	MysqlDb.db = db
 
 }
 
@@ -80,7 +80,7 @@ func ErrorCheck(err error) {
 }
 
 // Setup
-func (database *Mysql_db) dbLoad() {
+func (database *MysqlDb) dbLoad() {
 
 	create_user_table, err := database.db.Query("CREATE TABLE if not exists users (ID varchar(255) NOT NULL, pass_hash varchar(255), salt varchar(255) , PRIMARY KEY (ID));")
 	if err != nil {
@@ -97,7 +97,7 @@ func (database *Mysql_db) dbLoad() {
 }
 
 // Add user to the user table
-func (database *Mysql_db) addUser(user string, pass string) bool {
+func (database *MysqlDb) addUser(user string, pass string) bool {
 
 	pass_hash, err := hashPassword(pass)
 
@@ -123,7 +123,7 @@ func (database *Mysql_db) addUser(user string, pass string) bool {
 }
 
 // Check if a token is in the list of allowed tokens, return if true
-func (database *Mysql_db) checkToken(token string) token_template {
+func (database *MysqlDb) checkToken(token string) token_template {
 	var token_info = token_template{}
 
 	test_db := database.db
@@ -156,7 +156,7 @@ func (database *Mysql_db) checkToken(token string) token_template {
 }
 
 // Add token to the table of allowed tokens
-func (database *Mysql_db) allowToken(token string, userID int, exp int) {
+func (database *MysqlDb) allowToken(token string, userID int, exp int) {
 
 	res, err := database.db.Query("insert into tokens (token, UserID, exp) VALUES (? , ?, ?);", token, userID, exp)
 	if err != nil {
@@ -167,7 +167,7 @@ func (database *Mysql_db) allowToken(token string, userID int, exp int) {
 }
 
 // Return the user record from the database
-func (database *Mysql_db) getUser(user_ID int) userTemplate {
+func (database *MysqlDb) getUser(user_ID int) userTemplate {
 
 	var user userTemplate
 
@@ -187,7 +187,7 @@ func (database *Mysql_db) getUser(user_ID int) userTemplate {
 
 // Add a record to the camera table
 
-func (database *Mysql_db) getCamera(ID string) cameraTemplate {
+func (database *MysqlDb) getCamera(ID string) cameraTemplate {
 
 	var camera cameraTemplate
 
@@ -205,7 +205,7 @@ func (database *Mysql_db) getCamera(ID string) cameraTemplate {
 	return camera
 }
 
-func (database *Mysql_db) getAllMointors() []cameraTemplate {
+func (database *MysqlDb) getAllMointors() []cameraTemplate {
 	var cameras []cameraTemplate
 
 	res, err := database.db.Query("SELECT CameraID, url, name, height, width, enabled, defaultExp FROM cameras;")
@@ -223,7 +223,7 @@ func (database *Mysql_db) getAllMointors() []cameraTemplate {
 
 }
 
-func (database *Mysql_db) getRecordings(CameraID string, Start int, End int) []recording {
+func (database *MysqlDb) getRecordings(CameraID string, Start int, End int) []recording {
 	var recordings []recording
 
 	res, err := database.db.Query("SELECT ID, url, name from cameras;")
@@ -243,7 +243,7 @@ func (database *Mysql_db) getRecordings(CameraID string, Start int, End int) []r
 
 }
 
-func (db *Mysql_db) getUserByUsername(username string) userTemplate {
+func (db *MysqlDb) getUserByUsername(username string) userTemplate {
 	var user userTemplate
 
 	res, err := db.db.Query("SELECT UserID, userName, passHash from users where userName = ?;", username)
@@ -258,7 +258,7 @@ func (db *Mysql_db) getUserByUsername(username string) userTemplate {
 	return user
 }
 
-func (db *Mysql_db) getUserByToken(token string) userTemplate {
+func (db *MysqlDb) getUserByToken(token string) userTemplate {
 	var user userTemplate
 
 	res, err := db.db.Query("SELECT users.userID, users.userName, users.passHash FROM users, tokens WHERE users.userID = tokens.userID AND tokens.token = ?;", token)
@@ -274,7 +274,7 @@ func (db *Mysql_db) getUserByToken(token string) userTemplate {
 
 }
 
-func (db *Mysql_db) getPermissionID(permissionName string) int {
+func (db *MysqlDb) getPermissionID(permissionName string) int {
 	res, err := db.db.Query("SELECT permissionID FROM permissions WHERE permissionName = ?;", permissionName)
 	if err != nil {
 		log.Println(err)
@@ -289,7 +289,7 @@ func (db *Mysql_db) getPermissionID(permissionName string) int {
 	return id
 }
 
-func (db *Mysql_db) giveUserPermission(userID int, permissionID int) bool {
+func (db *MysqlDb) giveUserPermission(userID int, permissionID int) bool {
 	res, err := db.db.Query("INSERT INTO permissionLink (permissionID, userID) values(?, ?);", permissionID, userID)
 	if err != nil {
 		log.Println(err)
@@ -299,7 +299,7 @@ func (db *Mysql_db) giveUserPermission(userID int, permissionID int) bool {
 	return true
 }
 
-func (db *Mysql_db) checkUserPermission(userID int, permissionName string) bool {
+func (db *MysqlDb) checkUserPermission(userID int, permissionName string) bool {
 	res, err := db.db.Query("SELECT users.userID FROM users, permissionLink, permissions WHERE users.userID = permissionLink.userID AND permissionLink.permissionID = permissions.permissionID AND permissions.permissionName = ? AND users.userID = ?;", permissionName, userID)
 	if err != nil {
 		log.Println(err)
@@ -317,7 +317,7 @@ func (db *Mysql_db) checkUserPermission(userID int, permissionName string) bool 
 	return false
 }
 
-func (db *Mysql_db) removeUserbyID(userID int) bool {
+func (db *MysqlDb) removeUserbyID(userID int) bool {
 	if db.getUser(userID).username == "" {
 		return false
 	}
@@ -331,7 +331,7 @@ func (db *Mysql_db) removeUserbyID(userID int) bool {
 	return true
 }
 
-func (db *Mysql_db) removeUserbyName(username string) bool {
+func (db *MysqlDb) removeUserbyName(username string) bool {
 	if db.getUserByUsername(username).username == "" {
 		return false
 	}
@@ -346,7 +346,7 @@ func (db *Mysql_db) removeUserbyName(username string) bool {
 
 }
 
-func (db *Mysql_db) removeToken(tokenValue string) bool {
+func (db *MysqlDb) removeToken(tokenValue string) bool {
 	res, err := db.db.Query("DELETE FROM tokens WHERE token = ?", tokenValue)
 	if err != nil {
 		log.Println(err)
@@ -356,7 +356,7 @@ func (db *Mysql_db) removeToken(tokenValue string) bool {
 	return true
 }
 
-func (db *Mysql_db) changeUsernameByToken(token string, newUsername string) bool {
+func (db *MysqlDb) changeUsernameByToken(token string, newUsername string) bool {
 	user := db.getUserByToken(token)
 
 	res, err := db.db.Query("UPDATE users SET userName = ? where UserID = ?;", newUsername, user.ID)
@@ -369,7 +369,7 @@ func (db *Mysql_db) changeUsernameByToken(token string, newUsername string) bool
 }
 
 // Add camera
-func (db *Mysql_db) addCamera(url string, name string, defaultExp int) {
+func (db *MysqlDb) addCamera(url string, name string, defaultExp int) {
 	res, err := db.db.Query("INSERT INTO cameras (url, name, defaultExp, enabled) VALUES (?, ?, ?, true)", url, name, defaultExp)
 	if err != nil {
 		log.Println(err)
@@ -378,7 +378,7 @@ func (db *Mysql_db) addCamera(url string, name string, defaultExp int) {
 }
 
 // Remvoe camera
-func (db *Mysql_db) removeCamera(id int) {
+func (db *MysqlDb) removeCamera(id int) {
 	res, err := db.db.Query("DELETE FROM cameras WHERE CameraID = ?;", id)
 	if err != nil {
 		log.Println(err)
@@ -387,7 +387,7 @@ func (db *Mysql_db) removeCamera(id int) {
 	res.Close()
 }
 
-func (db *Mysql_db) updateCamera(id int, cameraName string, cameraUrl string, cameraExp int) {
+func (db *MysqlDb) updateCamera(id int, cameraName string, cameraUrl string, cameraExp int) {
 	res, err := db.db.Query("UPDATE cameras SET url = ?, name = ?, defaultExp = ? WHERE CameraID = ?;", cameraUrl, cameraName, cameraExp, id)
 
 	if err != nil {
@@ -396,7 +396,7 @@ func (db *Mysql_db) updateCamera(id int, cameraName string, cameraUrl string, ca
 	res.Close()
 }
 
-func (db *Mysql_db) getAllCameraIDs() []int {
+func (db *MysqlDb) getAllCameraIDs() []int {
 	var cameraIDs []int
 	res, err := db.db.Query("SELECT CameraID from cameras;")
 	if err != nil {
