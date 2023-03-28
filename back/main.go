@@ -12,7 +12,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var db Mysql_db
+var db MysqlDb
 
 var recordings Monitors
 
@@ -24,10 +24,10 @@ func main() {
 	config := loadConfig("config.yaml")
 
 	//Creating instance of the Mysql class (this needs changing the cammel casing asap).
-	db = Mysql_db{}
+	db = MysqlDb{}
 
 	//Open conneciton with database
-	db.open_db(config.Mysql_username, config.Mysql_password, config.Mysql_address, config.Mysql_database)
+	db.open_db(config.MysqlUsername, config.MysqlPassword, config.MysqlAddress, config.MysqlDatabase)
 
 	recordings.loadCameras()
 	go recordings.automaticDelete()

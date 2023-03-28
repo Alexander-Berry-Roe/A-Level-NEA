@@ -16,7 +16,7 @@
 
                 <button class="navbar-account" @click="accountMenuOpen = !accountMenuOpen">
                      <h3>
-                        Settings 
+                        Settings
 
                      </h3>
                 </button>

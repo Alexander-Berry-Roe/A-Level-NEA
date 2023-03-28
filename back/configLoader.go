@@ -8,11 +8,11 @@ import (
 )
 
 type configFormat struct {
-	Address        string `yaml:"Address"`
-	Mysql_address  string `yaml:"Mysql_address"`
-	Mysql_username string `yaml:"Mysql_username"`
-	Mysql_password string `yaml:"Mysql_password"`
-	Mysql_database string `yaml:"Mysql_database"`
+	Address       string `yaml:"Address"`
+	MysqlAddress  string `yaml:"Mysql_address"`
+	MysqlUsername string `yaml:"Mysql_username"`
+	MysqlPassword string `yaml:"Mysql_password"`
+	MysqlDatabase string `yaml:"Mysql_database"`
 }
 
 var config configFormat

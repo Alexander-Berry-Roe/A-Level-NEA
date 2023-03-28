@@ -16,7 +16,13 @@
     <div class="option-title">
       <t class="option-title">Change password</t>
     </div>
+    <t>New password</t>
     <input class="option-input">
+    <t>Confirm password</t>
+    <input class="option-input">
+    <button class="save-button">
+        Update
+    </button>
   </div>
 
 </template>
@@ -97,6 +103,19 @@ input.option-input {
   float:right;
   margin-top: 0.5rem;
   color: red;
-
 }
+.save-button {
+  position: relative;
+  margin-top: 0.5rem;
+  background-color:rgb(0, 102, 255);
+  margin-right: 1rem;
+  border-radius: 8px;
+  outline: none;
+  border: none;
+  width: 4rem;
+  height: 2rem;
+  color: white;
+  cursor: pointer;
+}
+
 </style>

@@ -1,12 +1,8 @@
 <template>
   <div class="modal-backdrop">
     <div class="modal">
-      <slot name="header">
-      </slot>
       <slot name="body">
-      </slot>
-      <slot name="footer">
-      </slot>
+      </slot>-
     </div>
   </div>
 </template>

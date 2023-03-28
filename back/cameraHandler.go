@@ -144,8 +144,8 @@ func (monitor *Monitor) captureCamera(dir string) {
 	automaticRestartStop := make(chan int)
 	automaticCaptureCamera := make(chan int)
 
-	go monitor.automaticCameraReconecter(automaticRestartStop)
-	go monitor.captureImage(automaticCaptureCamera)
+	//go monitor.automaticCameraReconecter(automaticRestartStop)
+	//go monitor.captureImage(automaticCaptureCamera)
 
 	//Scans every line of the playlist file and converts it to a series of recoridng records.
 	for {
@@ -184,7 +184,7 @@ func (monitor *Monitor) captureCamera(dir string) {
 					tempPlaylistStore += m + "\n"
 				}
 			}
-			time.Sleep(50)
+			time.Sleep(50 * time.Millisecond)
 			break
 		}
 	}

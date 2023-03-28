@@ -40,6 +40,13 @@
         >
         </navbar>
     </div>
+    <popup v-show="player">
+      <menuContainer @close="player = false" >
+        <video class="video-player" ref="video" @click="startPlayer()" >
+          <source :src="playlist" type="application/x-mpegURL" />
+        </video>
+      </menuContainer>
+    </popup>
 
 </template>
 
@@ -49,6 +56,10 @@
 }
 .fade-enter, .fade-leave-to {
   opacity: 0;
+}
+.video-player {
+    width:  90%;
+    margin: 1rem;
 }
 </style>
 
@@ -66,6 +77,7 @@ import Modal from './components/modal.vue';
 import liveVideo from './components/livePlayer.vue';
 import cameraMenu from './components/cameraMenu.vue';
 import recordedPlayer from './components/recordedPlayer.vue'
+import Hls from 'hls.js';
 
 
 export default {
@@ -91,7 +103,9 @@ export default {
             accountMenuList: [],
             accountSettingsShow: false,
             cameraSettings: false,
-            viewRecordedPlayer: false
+            viewRecordedPlayer: false,
+            player: false,
+            playlist: ""
 
 
         }
@@ -121,7 +135,36 @@ export default {
 
         openCameraMenu() {
             this.cameraSettings = true
+        },
+        startPlayer() {
+        const videoElement = this.$refs.video;
+        if (videoElement.paused || videoElement.ended) {
+          if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+            // Native playback is available
+            console.log('Native playback enabled');
+            videoElement.src = this.playlist;
+            videoElement.controls = true;
+            videoElement.addEventListener('loadedmetadata', () => {
+              videoElement.play();
+
+            });
+          } else if (Hls.isSupported()) {
+            // HLS is supported, use HLS.js
+            const hlsInstance = new Hls();
+            hlsInstance.attachMedia(videoElement);
+            hlsInstance.loadSource(this.playlist);
+            videoElement.controls = true;
+            hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+              videoElement.play();
+            });
+          } else {
+            // Neither HLS nor native playback is available
+            console.error('HLS and native playback are not supported');
+          }
+        } else {
+          videoElement.pause();
         }
+    }
 
     },
     created: function() {
@@ -142,6 +185,14 @@ export default {
         this.emitter.on("openAccountMenu", this.openAccountMenu);
         this.emitter.on("reloadUserInfo", this.refreshUserInfo);
         this.emitter.on("openCameraMenu", this.openCameraMenu)
+        //Opens recorded video player and plays selected camera.
+        this.emitter.on("playRecorded", (id) => {
+            const unixtime = Math.floor(Date.now() / 1000);
+            this.player = true
+            this.playlist = "/stream/record/" + id + "/0/" + unixtime +".m3u8"
+            setTimeout(() => this.startPlayer, 250);
+            setTimeout(() => this.startPlayer(), 500); 
+        });
     }
 
 }
